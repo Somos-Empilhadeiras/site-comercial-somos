@@ -8,14 +8,13 @@ export default function HomePage() {
 	const [showUnidades, setShowUnidades] = useState(false);
 
 	const STATES_INFO = [
-		{ state: 'TODOS', endereco: "-", link: "/comercial" },
-		{ state: 'GOIANIA - GO', endereco: "Av. Caiapó, 1190, Goiania - Goiás", link: "/go" },
-		{ state: 'BRASILIA - DF', endereco: "SCIA, Lote", link: "/df" },
-		{ state: 'TOCANTINS - TO', endereco: "Área Industrial, Palmas - TO", link: "/to" },
-		{ state: 'LEM - BA', endereco: "Av. Luís Eduardo Magalhães, QD 02 - LT 26, LEM - BA", link: "/ba" },
-		{ state: 'RECIFE - PE', endereco: "Área Portuária, Recife - PE", link: "/pe" },
+		{ state: 'TODOS', endereco: "Acesse as informações de todas as unidades", link: "/todos", uf: 'todos' },
+		{ state: 'GOIANIA - GO', endereco: "Av. Caiapó, 1190, Goiania - Goiás", link: "/go", uf: 'go' },
+		{ state: 'BRASILIA - DF', endereco: "SCIA, Lote", link: "/df", uf: 'df' },
+		{ state: 'PALMAS - TO', endereco: "Área Industrial, Palmas - TO", link: "/to", uf: 'to' },
+		{ state: 'LEM - BA', endereco: "Av. Luís Eduardo Magalhães, QD 02 - LT 26, LEM - BA", link: "/ba", uf: 'ba' },
+		{ state: 'RECIFE - PE', endereco: "Área Portuária, Recife - PE", link: "/pe", uf: 'pe' },
 	];
-
 	return (
 		<div className="flex flex-col items-center justify-center min-h-full py-12 ">
 
@@ -40,7 +39,20 @@ export default function HomePage() {
 			{/* Botões */}
 			<div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mb-20">
 				<button
-					onClick={() => setShowUnidades(!showUnidades)}
+					onClick={() => {
+						setShowUnidades(!showUnidades);
+
+						setTimeout(() => {
+							const element = document.getElementById('unidades');
+							if (element) {
+								element.scrollIntoView({
+									behavior: 'smooth',
+									block: 'center', // Tente trocar por 'center' se quiser que fique no meio da tela
+									inline: 'nearest'
+								});
+							}
+						}, 300);
+					}}
 					className="group flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl hover:shadow-green-900/20 hover:-translate-y-1 w-full sm:w-auto justify-center cursor-pointer"
 				>
 					<MapPin size={22} className={showUnidades ? "" : "group-hover:animate-bounce"} />
@@ -58,7 +70,7 @@ export default function HomePage() {
 			</div>
 
 			{/* Conteúdo com a nova animação */}
-			<div className="w-full flex items-center justify-center">
+			<div id="unidades" className="w-full flex items-center justify-center">
 				{showUnidades ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12 w-full">
 						{STATES_INFO.map((info, index) => (
@@ -70,7 +82,13 @@ export default function HomePage() {
 									animationFillMode: 'forwards'
 								}}
 							>
-								<InfoCard state={info.state} address={info.endereco} link={info.link} />
+								{/* Passando o mapState com a UF */}
+								<InfoCard
+									state={info.state}
+									address={info.endereco}
+									link={info.link}
+									mapState={info.uf} // Passando a UF para o mapa pintar
+								/>
 							</div>
 						))}
 					</div>

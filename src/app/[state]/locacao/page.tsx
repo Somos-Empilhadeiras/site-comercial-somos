@@ -1,10 +1,9 @@
-import DespesasForm from '@/shared/components/DespesasForm'
 import React from 'react'
 
 export default function LocacaoPage() {
   return (
     <div>
-            <DespesasForm />
+            <h1 className="text-3xl font-bold">Locação</h1>
     </div>
   )
 }
