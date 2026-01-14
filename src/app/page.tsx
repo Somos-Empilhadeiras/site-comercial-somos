@@ -8,6 +8,7 @@ export default function HomePage() {
 	const [showUnidades, setShowUnidades] = useState(false);
 
 	const STATES_INFO = [
+		{ state: 'TODOS', endereco: "-", link: "/comercial" },
 		{ state: 'GOIANIA - GO', endereco: "Av. Caiapó, 1190, Goiania - Goiás", link: "/go" },
 		{ state: 'BRASILIA - DF', endereco: "SCIA, Lote", link: "/df" },
 		{ state: 'TOCANTINS - TO', endereco: "Área Industrial, Palmas - TO", link: "/to" },
@@ -75,7 +76,7 @@ export default function HomePage() {
 					</div>
 				) : (
 					<div className="flex flex-col items-center text-slate-300 transition-opacity duration-500 opacity-100">
-						<Map size={80} strokeWidth={1} className="mb-4 opacity-20" />
+						<Map size={80} strokeWidth={1} className="mb-4 opacity-60" />
 						<p className="font-medium tracking-wide italic">Aguardando seleção de unidade...</p>
 					</div>
 				)}

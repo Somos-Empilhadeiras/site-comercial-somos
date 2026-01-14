@@ -3,11 +3,11 @@ import StatesCard from "@/shared/components/StatesCard";
 
 export default function UnidadesPage() {
     const STATES_INFO = [
-        {state: 'LEM - BA', endereco: "Av. Luís Eduardo Magalhães, QD 02 - LT 26, LEM - BA", link: "/unidades/ba" },
-        {state: 'GOIANIA - GO', endereco: "Av. Caiapó, 1190, Goiania - Goiás", link: "/unidades/go" },
-        {state: 'BRASILIA - DF', endereco: "SCIA, Lote", link: "/unidades/df" },
-        {state: 'TOCANTINS - DF', endereco: "TOCANTINS", link: "/unidades/to" },
-        {state: 'RECIFE - PE', endereco: "SCIA, Lote", link: "/unidades/pe" },
+        {state: 'LEM - BA', endereco: "Av. Luís Eduardo Magalhães, QD 02 - LT 26, LEM - BA", link: "/ba" },
+        {state: 'GOIANIA - GO', endereco: "Av. Caiapó, 1190, Goiania - Goiás", link: "/go" },
+        {state: 'BRASILIA - DF', endereco: "SCIA, Lote", link: "/df" },
+        {state: 'TOCANTINS - DF', endereco: "TOCANTINS", link: "/to" },
+        {state: 'RECIFE - PE', endereco: "SCIA, Lote", link: "/pe" },
     ]
     return (
         <div className="flex flex-col gap-12 items-center justify-center bg-zinc-50 font-sans">

@@ -8,7 +8,9 @@ export default function NavBar() {
             <nav className="bg-white border-b-4 border-[#005831] shadow-lg relative z-100 flex justify-center items-center h-20">
 
                 <div className="container w-full max-w-4/5 flex justify-between items-center">
-                    <Image src="/logo.png" alt="Logo" width={120} height={50} className="w-[120px] md:w-[150px] object-contain" />
+                    <Link href="/">
+                        <Image src="/logo.png" alt="Logo" width={120} height={50} className="w-[120px] md:w-[150px] object-contain" />
+                    </Link>
 
                     <div>
                         <Link href="/" className="mx-2 text-gray-700 hover:text-gray-900">Inicio</Link>

@@ -5,30 +5,31 @@ import { useParams } from "next/navigation";
 
 export default function UnidadesIdPage() {
     
+    const estadoParam = useParams().state;
     
-    const formataEstado = useParams().id == 'go' ? 'GOIÁS' : useParams().id == 'ba' ? 'BAHIA' : useParams().id == 'df' ? 'DISTRITO FEDERAL' : useParams().id == 'to' ? 'TOCANTINS' : useParams().id == 'pe' ? 'PERNAMBUCO' : '';
-    const estado = useParams().id == 'go' ? 'go' : useParams().id == 'ba' ? 'ba' : useParams().id == 'df' ? 'df' : useParams().id == 'to' ? 'to' : useParams().id == 'pe' ? 'pe' : '';
+    const formataEstado = estadoParam == 'go' ? 'GOIÁS' : estadoParam == 'ba' ? 'BAHIA' : estadoParam == 'df' ? 'DISTRITO FEDERAL' : estadoParam == 'to' ? 'TOCANTINS' : estadoParam == 'pe' ? 'PERNAMBUCO' : '';
+    const estado = estadoParam == 'go' ? 'go' : estadoParam == 'ba' ? 'ba' : estadoParam == 'df' ? 'df' : estadoParam == 'to' ? 'to' : estadoParam == 'pe' ? 'pe' : '';
     
 const TYPES_INFO = [
         { 
             type: 'ACERTO DE DESPESAS', 
             description: "Acesse relatórios detalhados sobre cada colaborador.", 
-            link: `/estado/${estado}/acerto-despesas` 
+            link: `${estado}/acerto-despesas` 
         },
         { 
             type: 'COMERCIAL', 
             description: "Gerencie propostas e formulários de vendas da unidade.", 
-            link: `/formularios/${estado}/comercial` 
+            link: `${estado}/comercial` 
         },
         { 
             type: 'LOCAÇÃO', 
             description: "Visualize contratos, manuais e termos de locação ativos.", 
-            link: `/recursos/${estado}/locacao` 
+            link: `${estado}/locacao` 
         },
         { 
             type: 'MARKETING', 
             description: "Baixe materiais de suporte, logotipos e mídias sociais.", 
-            link: `/suporte/${estado}/marketing` 
+            link: `/${estado}/marketing` 
         },
     ]
 

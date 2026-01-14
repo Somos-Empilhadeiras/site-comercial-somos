@@ -1,4 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface InfoCardProps {
   state: string;
@@ -23,7 +24,9 @@ export default function InfoCard({ state, address, link }: InfoCardProps) {
 
         <div className="absolute -right-16 top-1/2 -translate-y-1/2 z-20">
           <button className="hover:-translate-y-1 transition-all cursor-pointer drop-shadow-lg">
-            <img 
+            <Image
+              width={40}
+              height={20}
               src={'/favicon.ico'} 
               alt="Mapa do Brasil" 
               className="w-40 h-auto object-contain"
