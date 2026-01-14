@@ -27,7 +27,6 @@ export default function ComercialPage() {
     <div>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12 w-full'>
         
-        {/* 2. MAPEAR: Renderizamos um card para cada item da lista filtrada */}
         {currentCollaborators.length > 0 ? (
             currentCollaborators.map((collab, index) => (
                 <CollaboratorsCard 
