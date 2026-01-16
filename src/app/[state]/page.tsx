@@ -1,13 +1,15 @@
 'use client'
 
 import InfoCard from "@/shared/components/StatesCard";
-import { 
+import {
     Receipt,        // Despesas
     Briefcase,      // Comercial
     Truck,          // Locação
     Megaphone,      // Marketing
-    LucideIcon 
+    LucideIcon,
+    ArrowLeft
 } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 const STATE_CONFIG: Record<string, { name: string }> = {
@@ -63,6 +65,19 @@ export default function UnidadesIdPage() {
                 </h2>
             </div>
 
+            {/* 3. O LINK DINÂMICO */}
+            <div className="flex mb-3 items-center w-full">
+
+                <Link
+                    href={`/`}
+                    className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
+                    title="Voltar para a pagina inicial"
+                >
+                    <ArrowLeft size={20} />
+                    <p>Voltar</p>
+                </Link>
+
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8 w-full max-w-5xl">
                 {TYPES_INFO.map((info, index) => (
@@ -72,8 +87,8 @@ export default function UnidadesIdPage() {
                         address={info.description}
                         link={info.link}
                         // MODO ÍCONE ATIVADO: Passamos iconElem
-                        iconElem={info.icon} 
-                        // mapState={undefined} // Não passamos mapa aqui!
+                        iconElem={info.icon}
+                    // mapState={undefined} // Não passamos mapa aqui!
                     />
                 ))}
             </div>

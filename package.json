@@ -6,23 +6,30 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "email:dev": "email dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run email:dev\""
   },
   "dependencies": {
+    "@react-email/components": "^1.0.4",
     "@react-pdf/renderer": "^4.3.2",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-simple-maps": "^3.0.0"
+    "react-simple-maps": "^3.0.0",
+    "resend": "^6.7.0"
   },
   "devDependencies": {
+    "@react-email/preview-server": "5.2.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "react-email": "5.2.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

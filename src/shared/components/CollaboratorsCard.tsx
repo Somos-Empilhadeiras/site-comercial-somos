@@ -26,7 +26,7 @@ export default function CollaboratorsCard({ name, role, state, photoUrl, link }:
     return (
         <div className="flex items-center justify-center p-4">
             {/* CONTAINER: Exatamente as mesmas classes do InfoCard para manter consistência total */}
-            <div className="relative bg-gradient-to-br from-green-700 to-green-900 rounded-3xl p-8 w-96 min-h-[14rem] shadow-2xl flex flex-col justify-between overflow-visible group/card transition-all hover:-translate-y-1">
+            <div className="relative bg-linear-to-br from-green-700 to-green-900 rounded-3xl p-8 w-96 min-h-56 shadow-2xl flex flex-col justify-between overflow-visible group/card transition-all hover:-translate-y-1">
 
                 {/* LADO ESQUERDO: INFORMAÇÕES */}
                 <div className="z-10 pr-24 relative">

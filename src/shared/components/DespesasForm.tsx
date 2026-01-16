@@ -1,31 +1,30 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer';
-
-// --- 1. ESTILIZAÇÃO DO PDF (Identidade Visual) ---
-// Registrando uma fonte padrão (opcional, mas recomendado para acentos)
-// Font.register({ family: 'Roboto', src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/Roboto-Regular.ttf' });
+import { useParams } from 'next/navigation';
+import "@/app/globals.css";
+import { DownloadIcon, MailIcon } from 'lucide-react';
 
 const styles = StyleSheet.create({
-  page: { 
-    padding: 40, 
-    fontSize: 10, 
+  page: {
+    padding: 40,
+    fontSize: 10,
     fontFamily: 'Helvetica', // Fonte padrão segura
     color: '#333'
   },
   // Cabeçalho com a Marca
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20, 
-    borderBottomWidth: 2, 
+    marginBottom: 20,
+    borderBottomWidth: 2,
     borderBottomColor: '#15803d', // green-700
-    paddingBottom: 10 
+    paddingBottom: 10
   },
-  brandTitle: { 
-    color: '#15803d', 
-    fontSize: 24, 
+  brandTitle: {
+    color: '#15803d',
+    fontSize: 24,
     fontWeight: 'black',
     textTransform: 'uppercase'
   },
@@ -36,9 +35,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1
   },
   // Seções
-  section: { 
-    marginBottom: 15, 
-    padding: 10, 
+  section: {
+    marginBottom: 15,
+    padding: 10,
     backgroundColor: '#f8fafc', // slate-50
     borderRadius: 4
   },
@@ -53,25 +52,25 @@ const styles = StyleSheet.create({
     paddingBottom: 4
   },
   // Grid System (Simulado com Flexbox)
-  row: { 
-    flexDirection: 'row', 
-    marginBottom: 8 
+  row: {
+    flexDirection: 'row',
+    marginBottom: 8
   },
-  col: { 
-    flexGrow: 1, 
-    flexBasis: 0 
+  col: {
+    flexGrow: 1,
+    flexBasis: 0
   },
   col2: {
     flexGrow: 2,
     flexBasis: 0
   },
-  label: { 
+  label: {
     color: '#64748b', // slate-500
     fontSize: 8,
     textTransform: 'uppercase',
     marginBottom: 2
   },
-  value: { 
+  value: {
     fontSize: 11,
     fontWeight: 'medium'
   },
@@ -123,7 +122,7 @@ const styles = StyleSheet.create({
   }
 });
 
-interface FormValuesProps {
+export interface FormValuesProps {
   email: string;
   nome: string;
   parceiro: string;
@@ -134,7 +133,7 @@ interface FormValuesProps {
   tipo_despesa: string;
   valor_cupom: number;
   declaracao_veracidade: boolean;
-  foto_cupom: File | null;
+  foto_cupom: File | any | null;
 }
 
 const initialFormValues: FormValuesProps = {
@@ -151,122 +150,179 @@ const initialFormValues: FormValuesProps = {
   foto_cupom: null,
 }
 
-// --- 2. COMPONENTE DO PDF ---
-const DespesaDocument = ({ data, receiptUrl }: { data: FormValuesProps, receiptUrl: string | null }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <View>
-            <Image src="/logo.png" style={{width: 160, height: 40}} />
-        </View>
-        <Text style={styles.reportTitle}>Relatório de Despesa</Text>
-      </View>
-
-      {/* Dados do Colaborador */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Identificação</Text>
-        <View style={styles.row}>
-            <View style={styles.col}>
-                <Text style={styles.label}>Nome do Colaborador</Text>
-                <Text style={styles.value}>{data.nome || '-'}</Text>
-            </View>
-            <View style={styles.col}>
-                <Text style={styles.label}>E-mail Corporativo</Text>
-                <Text style={styles.value}>{data.email || '-'}</Text>
-            </View>
-        </View>
-        <View style={styles.row}>
-            <View style={styles.col}>
-                <Text style={styles.label}>Parceiro / Cliente</Text>
-                <Text style={styles.value}>{data.parceiro || '-'}</Text>
-            </View>
-        </View>
-      </View>
-
-      {/* Detalhes da Despesa */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Detalhes da Despesa</Text>
-        
-        <View style={styles.row}>
-            <View style={styles.col}>
-                <Text style={styles.label}>Data</Text>
-                <Text style={styles.value}>{data.data_cupom ? new Date(data.data_cupom).toLocaleDateString('pt-BR') : '-'}</Text>
-            </View>
-            <View style={styles.col}>
-                <Text style={styles.label}>Categoria</Text>
-                <Text style={styles.value}>{data.tipo_despesa || '-'}</Text>
-            </View>
-            <View style={styles.col}>
-                <Text style={styles.label}>Pagamento via</Text>
-                <Text style={styles.value}>{data.tipo_pagamento || '-'}</Text>
-            </View>
-        </View>
-
-        <View style={styles.row}>
-            <View style={styles.col}>
-                <Text style={styles.label}>Estabelecimento</Text>
-                <Text style={styles.value}>{data.nome_estabelecimento || '-'}</Text>
-            </View>
-        </View>
-
-        <View style={{marginTop: 5}}>
-            <Text style={styles.label}>Descrição / Relatório</Text>
-            <Text style={styles.value}>{data.relatorio || 'Sem descrição adicional.'}</Text>
-        </View>
-
-        {/* Caixa de Total */}
-        <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>VALOR TOTAL</Text>
-            <Text style={styles.totalValue}>R$ {Number(data.valor_cupom).toFixed(2)}</Text>
-        </View>
-      </View>
-
-      {/* Imagem do Cupom */}
-      <Text style={styles.sectionTitle}>Comprovante Anexado</Text>
-      <View style={styles.receiptContainer}>
-         {receiptUrl ? (
-            <Image src={receiptUrl} style={styles.receiptImage} />
-         ) : (
-            <Text style={{color: '#94a3b8'}}>Nenhum comprovante anexado</Text>
-         )}
-      </View>
-
-      {/* Rodapé */}
-      <Text style={styles.footer}>
-        Documento gerado automaticamente pelo Portal Comercial Somos Empilhadeiras em {new Date().toLocaleString('pt-BR')}
-      </Text>
-    </Page>
-  </Document>
-);
-
 // --- 3. COMPONENTE FORMULÁRIO ---
 const DespesasForm = () => {
   const [isClient, setIsClient] = useState(false);
   const [formValues, setFormValues] = useState<FormValuesProps>(initialFormValues);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  
+  const params = useParams();
+  
+  const stateNames: Record<string, string> = {
+    'GO': 'Goiás',
+    'DF': 'Distrito Federal',
+    'TO': 'Tocantins',
+    'BA': 'Bahia',
+    'PE': 'Pernambuco'
+  };
 
-  // Evita erro de Hydration no Next.js
+  const DespesaDocument = ({ data, receiptUrl, docState }: { data: FormValuesProps, receiptUrl: string | null, docState: string | any }) => (
+  
+    < Document >
+    <Page size="A4" style={styles.page}>
+  
+      {/* Cabeçalho */}
+      <View style={styles.header}>
+        <View>
+          <Image src="/logo.png" style={{ width: 160, height: 40 }} />
+        </View>
+        <Text style={styles.reportTitle}>Relatório de Despesa</Text>
+      </View>
+  
+      {/* Dados do Colaborador */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Identificação</Text>
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <Text style={styles.label}>Nome do Colaborador</Text>
+            <Text style={styles.value}>{data.nome || '-'}</Text>
+          </View>
+          <View style={styles.col}>
+            <Text style={styles.label}>E-mail Corporativo</Text>
+            <Text style={styles.value}>{data.email || '-'}</Text>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <Text style={styles.label}>Parceiro / Cliente</Text>
+            <Text style={styles.value}>{data.parceiro || '-'}</Text>
+          </View>
+          <View style={styles.col}>
+            <Text style={styles.label}>Estado</Text>
+            <Text style={styles.value}>{(stateNames[docState.toUpperCase()] || docState.toUpperCase()).toUpperCase() || '-'}</Text>
+          </View>
+        </View>
+      </View>
+  
+      {/* Detalhes da Despesa */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Detalhes da Despesa</Text>
+  
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <Text style={styles.label}>Data</Text>
+            <Text style={styles.value}>{data.data_cupom ? new Date(data.data_cupom).toLocaleDateString('pt-BR') : '-'}</Text>
+          </View>
+          <View style={styles.col}>
+            <Text style={styles.label}>Categoria</Text>
+            <Text style={styles.value}>{data.tipo_despesa || '-'}</Text>
+          </View>
+          <View style={styles.col}>
+            <Text style={styles.label}>Pagamento via</Text>
+            <Text style={styles.value}>{data.tipo_pagamento || '-'}</Text>
+          </View>
+        </View>
+  
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <Text style={styles.label}>Estabelecimento</Text>
+            <Text style={styles.value}>{data.nome_estabelecimento || '-'}</Text>
+          </View>
+        </View>
+  
+        <View style={{ marginTop: 5 }}>
+          <Text style={styles.label}>Descrição / Relatório</Text>
+          <Text style={styles.value}>{data.relatorio || 'Sem descrição adicional.'}</Text>
+        </View>
+  
+        {/* Caixa de Total */}
+        <View style={styles.totalBox}>
+          <Text style={styles.totalLabel}>VALOR TOTAL</Text>
+          <Text style={styles.totalValue}>R$ {Number(data.valor_cupom).toFixed(2)}</Text>
+        </View>
+      </View>
+  
+      {/* Imagem do Cupom */}
+      <Text style={styles.sectionTitle}>Comprovante Anexado</Text>
+      <View style={styles.receiptContainer}>
+        {receiptUrl ? (
+          <Image src={receiptUrl} style={styles.receiptImage} />
+        ) : (
+          <Text style={{ color: '#94a3b8' }}>Nenhum comprovante anexado</Text>
+        )}
+      </View>
+  
+      {/* Rodapé */}
+      <Text style={styles.footer}>
+        Documento gerado automaticamente pelo Portal Comercial Somos Empilhadeiras em {new Date().toLocaleString('pt-BR')}
+      </Text>
+    </Page>
+    </Document >
+  );
+
   useEffect(() => { setIsClient(true) }, []);
 
   // Lógica para transformar o Arquivo em URL para o PDF
   useEffect(() => {
     if (formValues.foto_cupom) {
-        const url = URL.createObjectURL(formValues.foto_cupom);
-        setReceiptUrl(url);
-        // Limpeza de memória
-        return () => URL.revokeObjectURL(url);
+      const url = URL.createObjectURL(formValues.foto_cupom);
+      setReceiptUrl(url);
+      // Limpeza de memória
+      return () => URL.revokeObjectURL(url);
     }
   }, [formValues.foto_cupom]);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  async function handleSend() {
+    try {
+      let base64Image = null;
+
+      if (formValues.foto_cupom) {
+        base64Image = await fileToBase64(formValues.foto_cupom);
+      }
+
+      const payload = {
+        ...formValues,
+        foto_cupom_base64: base64Image,
+        foto_cupom: undefined
+      };
+
+      const response = await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'financeiro@somosempilhadeiras.com.br', // Destinatário
+          data: payload,
+          state: params.state
+        })
+      });
+
+      if (response.ok) {
+        alert('Relatório enviado com sucesso!');
+      } else {
+        alert('Erro ao enviar.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Erro de conexão.');
+    }
+  }
 
   return (
     <div className="min-w-full min-h-screen flex justify-center">
       <form className="flex flex-col gap-6 w-lvw md:w-full lg:w-3xl xl:w-5xl bg-white p-8 rounded-2xl shadow-xl" onSubmit={(e) => e.preventDefault()}>
-        
+
         <div className="border-b pb-4 mb-2">
-            <h2 className="text-2xl font-bold text-green-800">Novo Relatório de Despesa</h2>
-            <p className="text-gray-500 text-sm">Preencha os dados abaixo para gerar o PDF de reembolso.</p>
+          <h2 className="text-2xl font-bold text-green-800">Novo Relatório de Despesa</h2>
+          <p className="text-gray-500 text-sm">Preencha os dados abaixo para gerar o PDF de reembolso.</p>
         </div>
 
         {/* --- DADOS DO COLABORADOR --- */}
@@ -363,44 +419,50 @@ const DespesasForm = () => {
         </div>
 
         <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Relatório / Observações</label>
-            <textarea
-              className="border border-gray-300 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
-              rows={3}
-              placeholder="Descreva o motivo da despesa..."
-              value={formValues.relatorio}
-              onChange={(e) => setFormValues({ ...formValues, relatorio: e.target.value })}
-            />
+          <label className="block text-sm font-bold text-gray-700 mb-1">Relatório / Observações</label>
+          <textarea
+            className="border border-gray-300 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+            rows={3}
+            placeholder="Descreva o motivo da despesa..."
+            value={formValues.relatorio}
+            onChange={(e) => setFormValues({ ...formValues, relatorio: e.target.value })}
+          />
         </div>
 
         {/* --- UPLOAD DE ARQUIVO --- */}
         <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
-            <input
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              type='file'
-              accept='image/*'
-              onChange={(e) => {
-                const file = e.target.files ? e.target.files[0] : null;
-                setFormValues({ ...formValues, foto_cupom: file });
-              }}
-            />
-            <div className="flex flex-col items-center">
-                <span className="text-gray-500 font-medium">
-                    {formValues.foto_cupom ? `Arquivo selecionado: ${formValues.foto_cupom.name}` : "Clique para anexar a foto do cupom"}
-                </span>
-                <span className="text-xs text-gray-400 mt-1">Formatos: JPG, PNG (Max 5MB)</span>
-            </div>
+          <input
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            type='file'
+            accept='image/*'
+            onChange={(e) => {
+              const file = e.target.files ? e.target.files[0] : null;
+              setFormValues({ ...formValues, foto_cupom: file });
+            }}
+          />
+          <div className="flex flex-col items-center">
+            <span className="text-gray-500 font-medium">
+              {formValues.foto_cupom ? `Arquivo selecionado: ${formValues.foto_cupom.name}` : "Clique para anexar a foto do cupom"}
+            </span>
+            <span className="text-xs text-gray-400 mt-1">Formatos: JPG, PNG (Max 5MB)</span>
+          </div>
         </div>
 
         {/* --- BOTÃO DE DOWNLOAD --- */}
         {isClient && (
-          <PDFDownloadLink
-            document={<DespesaDocument data={formValues} receiptUrl={receiptUrl} />}
-            fileName={`despesa_${formValues.nome || 'relatorio'}.pdf`}
-            className="bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center hover:bg-green-800 transition-all shadow-lg hover:shadow-green-900/20 flex items-center justify-center gap-2"
-          >
-            {({ loading }) => (loading ? 'Processando Documento...' : 'BAIXAR RELATÓRIO PDF')}
-          </PDFDownloadLink>
+          <div className='grid md:grid-cols-2 sm:grid-rows-2 gap-5 justify-around'>
+            <PDFDownloadLink
+              document={<DespesaDocument data={formValues} receiptUrl={receiptUrl} docState={params.state} />}
+              fileName={`despesa_${formValues.nome || 'relatorio'}_${Date.now()}.pdf`}
+              className="bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center hover:bg-green-800 transition-all shadow-lg hover:shadow-green-900/20 flex items-center justify-center gap-2"
+            >
+              {({ loading }) => (loading ? 'Processando Documento...' : (<span className='flex gap-2 items-center'><DownloadIcon /> BAIXAR PDF</span>))}
+            </PDFDownloadLink>
+
+            <button className="bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-center hover:bg-blue-800 transition-all shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-2" onClick={handleSend}>
+              <span className='flex gap-2 items-center'><MailIcon />Enviar por Email</span>
+            </button>
+          </div>
         )}
       </form>
     </div>

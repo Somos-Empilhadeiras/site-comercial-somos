@@ -12,22 +12,22 @@ export default function AcertoDespesasPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      
+
       {/* --- CABEÇALHO FIXO (Sticky Header) --- */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            
+
             {/* Lado Esquerdo: Voltar + Título */}
             <div className="flex items-center gap-4">
-              <Link 
-                href={`/${state}`} 
+              <Link
+                href={`/${state}`}
                 className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
                 title="Voltar para a Unidade"
               >
                 <ArrowLeft size={20} />
               </Link>
-              
+
               <div className="flex flex-col">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <FileText size={18} className="text-green-700" />
