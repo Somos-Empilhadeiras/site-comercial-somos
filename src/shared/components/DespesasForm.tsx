@@ -153,7 +153,7 @@ const initialFormValues: FormValuesProps = {
 }
 
 // --- 3. COMPONENTE FORMULÁRIO ---
-const DespesasForm = ({ name }: { name: string }) => {
+const DespesasForm = ({ name, email }: { name: string, email: string }) => {
   const [isClient, setIsClient] = useState(false);
   const [formValues, setFormValues] = useState<FormValuesProps>(initialFormValues);
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
@@ -339,8 +339,9 @@ const DespesasForm = ({ name }: { name: string }) => {
                 <input
                   className="border border-gray-300 rounded-lg p-2.5 w-full focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
                   type="email"
-                  value={formValues.email}
-                  onChange={(e) => setFormValues({ ...formValues, email: e.target.value })}
+                  readOnly={true}
+                  value={formValues.email = email}
+                  onChange={(e) => setFormValues({ ...formValues, email: email })}
                 />
               </div>
               <div>

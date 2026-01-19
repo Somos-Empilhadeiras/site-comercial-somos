@@ -26,7 +26,7 @@ export default function UnidadesIdPage() {
 
     // 1. LÓGICA DE FILTRAGEM:
     // Procuramos se existe algum colaborador cujo link contenha o slug da URL
-    const currentCollaborator = COLLABORATORS.find((c) => 
+    const currentCollaborator = Object.values(COLLABORATORS).find((c) => 
         c.link.includes(collaboratorSlug) && c.state === currentStateKey
     );
 
