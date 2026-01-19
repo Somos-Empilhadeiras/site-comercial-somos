@@ -1,97 +1,75 @@
-'use client'
+'use client';
 
-import InfoCard from "@/shared/components/StatesCard";
-import {
-    Receipt,        // Despesas
-    Briefcase,      // Comercial
-    Truck,          // Locação
-    Megaphone,      // Marketing
-    LucideIcon,
-    ArrowLeft
-} from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import CollaboratorsCard from '@/shared/components/CollaboratorsCard';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import React from 'react'
 
-const STATE_CONFIG: Record<string, { name: string }> = {
-    go: { name: 'GOIÁS' },
-    ba: { name: 'BAHIA' },
-    df: { name: 'DISTRITO FEDERAL' },
-    to: { name: 'TOCANTINS' },
-    pe: { name: 'PERNAMBUCO' },
-};
+export const COLLABORATORS = [
+  { name: "KHRYSS MYLLA", role: "ANALISTA COMERCIAL", state: "go", photoUrl: "/images/joao.jpg", link: "go/khryss-mylla" },
+  { name: "LAIS TOLEDO", role: "CONSULTOR(A) COMERCIAL", state: "go", photoUrl: "/images/maria.jpg", link: "go/lais-toledo" },
+  { name: "AGUINALDO LEMES", role: "CONSULTOR(A) COMERCIAL", state: "go", photoUrl: "/images/carlos.jpg", link: "go/aguinaldo-lemes" },
+  { name: "EZEQUIEL", role: "CONSULTOR(A) COMERCIAL", state: "df", photoUrl: "/images/carlos.jpg", link: "df/ezequiel" },
+  { name: "TIAGO FREUA", role: "CONSULTOR(A) COMERCIAL", state: "to", photoUrl: "/images/carlos.jpg", link: "to/tiago-freua" },
+  { name: "RAFAEL GOMES", role: "CONSULTOR(A) DE NEGOCIOS", state: "ba", photoUrl: "/images/carlos.jpg", link: "ba/rafael-gomes" },
+  { name: "JOSÉ HENRIQUE", role: "CONSULTOR(A) DE NEGOCIOS", state: "pe", photoUrl: "/images/carlos.jpg", link: "pe/jose-henrique" },
+];
 
-export default function UnidadesIdPage() {
-    const params = useParams();
-    const currentStateKey = (params.state as string) || '';
-    const currentData = STATE_CONFIG[currentStateKey] || { name: 'UNIDADE' };
+export default function ComercialPage() {
+  const params = useParams();
+  const state = params.state || '/';
 
-    const TYPES_INFO = [
-        {
-            type: 'ACERTO DE DESPESAS',
-            description: "Acesse relatórios detalhados.",
-            icon: Receipt,
-            link: `/${currentStateKey}/acerto-despesas`
-        },
-        {
-            type: 'COMERCIAL',
-            description: "Propostas e formulários.",
-            icon: Briefcase, // <--- Ícone
-            link: `/${currentStateKey}/comercial`
-        },
-        {
-            type: 'LOCAÇÃO',
-            description: "Empilhadeiras disponíveis.",
-            icon: Truck, // <--- Ícone
-            link: `https://somosempilhadeiras.com/empilhadeiras`
-        },
-        {
-            type: 'MARKETING',
-            description: "Materiais e logotipos.",
-            icon: Megaphone, // <--- Ícone
-            link: `/${currentStateKey}/marketing`
-        },
-    ];
+  const currentCollaborators = COLLABORATORS.filter(
+    (collab) => collab.state === params.state
+  );
 
+  return (
+    <div>
 
-    return (
-        <div className="flex flex-col gap-12 items-center justify-center bg-zinc-50 font-sans">
-            {/* Cabeçalho mantido igual */}
-            <div className="flex flex-col text-center gap-2 max-w-4xl">
-                <h1 className="text-3xl md:text-4xl font-black text-green-900 uppercase leading-tight">
-                    Unidade {currentData.name}
-                </h1>
-                <h2 className="text-lg md:text-xl text-green-700 font-medium uppercase tracking-wide">
-                    Selecione a opção desejada abaixo
-                </h2>
-            </div>
+      {/* 3. O LINK DINÂMICO */}
+      <div className="flex mb-3 items-center">
 
-            {/* 3. O LINK DINÂMICO */}
-            <div className="flex mb-3 items-center w-full">
+        <Link
+          href={`/`}
+          className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
+          title="Voltar para a Unidade"
+        >
+          <ArrowLeft size={20} />
+            <p>Voltar</p>
+        </Link>
 
-                <Link
-                    href={`/`}
-                    className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
-                    title="Voltar para a pagina inicial"
-                >
-                    <ArrowLeft size={20} />
-                    <p>Voltar</p>
-                </Link>
+      </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12 w-full'>
 
-            </div>
+        {currentCollaborators.length > 0 ? (
+          currentCollaborators.map((collab, index) => (
+            <CollaboratorsCard
+              key={index}
+              name={collab.name}
+              role={collab.role}
+              state={collab.state}
+              photoUrl={collab.photoUrl}
+              link={collab.link}
+            />
+          ))
+        ) : (
+          params.state === 'todos' ? (
+            COLLABORATORS.map((collab, index) => (
+              <CollaboratorsCard
+                key={index}
+                name={collab.name}
+                role={collab.role}
+                state={collab.state}
+                photoUrl={collab.photoUrl}
+                link={collab.link}
+              />
+            ))
+          ) : (
+            <p>Nenhum colaborador encontrado para esta unidade.</p>
+          ))}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8 w-full max-w-5xl">
-                {TYPES_INFO.map((info, index) => (
-                    <InfoCard
-                        key={index}
-                        state={info.type}
-                        address={info.description}
-                        link={info.link}
-                        // MODO ÍCONE ATIVADO: Passamos iconElem
-                        iconElem={info.icon}
-                    // mapState={undefined} // Não passamos mapa aqui!
-                    />
-                ))}
-            </div>
-        </div>
-    );
+      </div>
+    </div>
+  )
 }

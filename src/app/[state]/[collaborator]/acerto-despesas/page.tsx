@@ -6,10 +6,11 @@ import DespesasForm from '@/shared/components/DespesasForm'
 import { useParams } from 'next/navigation';
 
 export default function AcertoDespesasPage() {
-
+  
   const params = useParams();
   const state = params.state || '/';
-
+  const name: string = (params.collaborator as string).toString().replace('-', ' ').toUpperCase();
+  
   return (
     <main className="min-h-screen bg-gray-50">
 
@@ -24,7 +25,7 @@ export default function AcertoDespesasPage() {
                 href={`/${state}`}
                 className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
                 title="Voltar para a Unidade"
-              >
+                >
                 <ArrowLeft size={20} />
               </Link>
 
@@ -51,9 +52,9 @@ export default function AcertoDespesasPage() {
       {/* Nota: O componente DespesasForm já possui padding e background.
          Aqui nós apenas o renderizamos. Se o background do Form for diferente
          do 'bg-gray-50' desta página, você pode ajustar aqui.
-      */}
+         */}
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <DespesasForm />
+        <DespesasForm name={name} />
       </div>
 
     </main>
