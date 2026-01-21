@@ -1,4 +1,4 @@
-import DespesasForm from '@/shared/components/DespesasForm'
+import DespesasForm from '@/shared/components/forms/DespesasForm'
 import React from 'react'
 
 export default function MarketingPage() {

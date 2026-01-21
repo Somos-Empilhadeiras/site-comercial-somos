@@ -39,7 +39,7 @@ export default function InfoCard({ state, address, link, iconElem, mapState }: I
                 />
             ) : mapState ? (
                 // LÓGICA DO MAPA (Mantida porque você gostou)
-                <div className="w-56 h-56 opacity-60 group-hover/card:scale-105 transition-all duration-700 mr-4">
+                <div className="w-64 h-64 opacity-60 group-hover/card:scale-105 transition-all duration-700 translate-x-6 mr-4">
                     <MiniBrazilMap activeState={mapState} />
                 </div>
             ) : null}

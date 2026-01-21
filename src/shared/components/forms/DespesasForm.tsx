@@ -293,6 +293,9 @@ const DespesasForm = ({ name, email }: { name: string, email: string }) => {
         base64Image = await fileToBase64(formValues.foto_cupom);
       }
 
+      // Pegamos o slug da URL (ex: "khryss-mylla")
+      const collaboratorSlug = params.collaborator as string;
+
       const payload = {
         ...formValues,
         foto_cupom_base64: base64Image,
@@ -303,12 +306,12 @@ const DespesasForm = ({ name, email }: { name: string, email: string }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: emailDestinoResend, // Destinatário
+          slug: collaboratorSlug, // Enviamos a CHAVE para a API
           data: payload,
           state: params.state
         })
       });
-
+      
       if (response.ok) {
         alert('Relatório enviado com sucesso!');
         window.location.reload();

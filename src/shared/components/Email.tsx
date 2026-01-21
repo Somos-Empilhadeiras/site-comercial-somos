@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Section, Row, Column, Text, Tailwind, Html, Head, Body, Container, Heading, Hr, Link, Img } from "@react-email/components";
-import { FormValuesProps } from './DespesasForm';
+import { FormValuesProps } from './forms/DespesasForm';
 
 interface EmailTemplateProps {
     data: FormValuesProps;

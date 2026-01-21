@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ArrowLeft, FileText, Printer } from 'lucide-react'
-import DespesasForm from '@/shared/components/DespesasForm'
+import DespesasForm from '@/shared/components/forms/DespesasForm'
 import { useParams } from 'next/navigation';
 
 // Mova isso para um arquivo de constantes ou mantenha aqui, 
@@ -38,12 +38,12 @@ export default function AcertoDespesasPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Link
-                href={`/${state}`}
+              <button
+                onClick={() => window.history.back()}
                 className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
               >
                 <ArrowLeft size={20} />
-              </Link>
+              </button>
 
               <div className="flex flex-col">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">

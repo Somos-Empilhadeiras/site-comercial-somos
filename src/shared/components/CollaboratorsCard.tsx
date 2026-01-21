@@ -14,11 +14,11 @@ interface Collaborator {
 export default function CollaboratorsCard({ name, role, state, photoUrl, link }: Collaborator) {
 
     const stateNames: Record<string, string> = {
-        go: 'GOIÁS',
-        ba: 'BAHIA',
-        df: 'DISTRITO FEDERAL',
-        to: 'TOCANTINS',
-        pe: 'PERNAMBUCO'
+        go: 'GOIANIA / GOIÁS',
+        ba: 'LUES EDUARDO MAGALHÃES / BAHIA',
+        df: 'BRASÍLIA / DISTRITO FEDERAL',
+        to: 'PALMAS / TOCANTINS',
+        pe: 'RECIFE / PERNAMBUCO'
     };
     
     const formataEstado = stateNames[state.toLowerCase()] || state.toUpperCase();

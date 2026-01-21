@@ -72,11 +72,11 @@ export default function HomePage() {
 			{/* Conteúdo com a nova animação */}
 			<div id="unidades" className="w-full flex items-center justify-center">
 				{showUnidades ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12 w-full">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-1 w-full">
 						{STATES_INFO.map((info, index) => (
 							<div
 								key={index}
-								className="flex justify-center animate-slide-right opacity-0"
+								className="flex justify-center items-center animate-slide-right opacity-0"
 								style={{
 									animationDelay: `${index * 0.07}s`,
 									animationFillMode: 'forwards'
