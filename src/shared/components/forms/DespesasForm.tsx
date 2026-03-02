@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image } from '@react-pdf/renderer';
 import { useParams } from 'next/navigation';
 import "@/app/globals.css";
 import { ChevronsLeftIcon, ChevronsRightIcon, DownloadIcon, MailIcon } from 'lucide-react';

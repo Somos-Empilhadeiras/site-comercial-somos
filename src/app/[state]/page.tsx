@@ -1,81 +1,107 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import CollaboratorsCard from '@/shared/components/CollaboratorsCard';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import React from 'react'
 import NotFound from '../not-found';
 
-export const COLLABORATORS = {
-  khryss: { name: "KHRYSS MYLLA", role: "ANALISTA COMERCIAL", email: "heli@somosempilhadeiras.com.br", state: "go", photoUrl: "/favicon.ico", link: "go/khryss-mylla" },
-  lais: { name: "LAIS TOLEDO", role: "CONSULTOR(A) COMERCIAL", email: "lais@somosempilhadeiras.com.br", state: "go", photoUrl: "/favicon.ico", link: "go/lais-toledo" },
-  aguinaldo: { name: "AGUINALDO LEMES", role: "CONSULTOR(A) COMERCIAL", email: "aguinaldo@somosempilhadeiras.com.br", state: "go", photoUrl: "/favicon.ico", link: "go/aguinaldo-lemes" },
-  ezequiel: { name: "EZEQUIEL", role: "CONSULTOR(A) COMERCIAL", email: "ezequiel@somosempilhadeiras.com.br", state: "df", photoUrl: "/favicon.ico", link: "df/ezequiel" },
-  tiagoFreua: { name: "TIAGO FREUA", role: "CONSULTOR(A) COMERCIAL", email: "tiago@somosempilhadeiras.com.br", state: "to", photoUrl: "/favicon.ico", link: "to/tiago-freua" },
-  rafaelGomes: { name: "RAFAEL GOMES", role: "CONSULTOR(A) DE NEGOCIOS", email: "raael@somosempilhadeiras.com.br", state: "ba", photoUrl: "/favicon.ico", link: "ba/rafael-gomes" },
-  joseHenrique: { name: "JOSÉ HENRIQUE", role: "CONSULTOR(A) DE NEGOCIOS", email: "josehenrique@somosempilhadeiras.com.br", state: "pe", photoUrl: "/favicon.ico", link: "pe/jose-henrique" },
-};
+// Tipagem limpa, sem dependências do backend!
+interface CollaboratorData {
+  _id?: string;
+  id?: string;
+  name: string;
+  login: string;
+  role: string;
+  state: string;
+}
 
 export default function ComercialPage() {
   const params = useParams();
-  const state = params.state || '/';
+  const stateParam = (params.state as string) || '';
 
-  const currentCollaborators = Object.values(COLLABORATORS).filter(
-    (collab) => collab.state === params.state
-  );
+  const [collaborators, setCollaborators] = useState<CollaboratorData[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+
+        const sessionRes = await fetch('/api/auth/me');
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          setCurrentUser(sessionData.user);
+        }
+
+        const url = stateParam === 'todos' ? '/api/collaborators' : `/api/collaborators?state=${stateParam}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Falha ao buscar colaboradores');
+
+        const data = await response.json();
+        setCollaborators(data);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (stateParam) fetchData();
+  }, [stateParam]);
 
   return (
-    <div>
+    <div className="py-10 min-h-screen bg-zinc-50">
+      <div className="max-w-6xl mx-auto px-4">
 
-      {/* 3. O LINK DINÂMICO */}
-      {(currentCollaborators.length > 0 || params.state === 'todos') &&
-
-        (<div className="flex mb-3 items-center">
-
-          <Link
-            href={`/`}
-            className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-green-700 transition-colors cursor-pointer"
-            title="Voltar para a Unidade"
-          >
+        <div className="flex mb-6 items-center justify-between">
+          <Link href={`/`} className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-green-700 transition-colors font-bold w-fit">
             <ArrowLeft size={20} />
             <p>Voltar</p>
           </Link>
-        </div>)
-      }
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-8 w-full px-4'>
-
-        {currentCollaborators.length > 0 ? (
-          currentCollaborators.map((collab, index) => (
-            <CollaboratorsCard
-              key={index}
-              name={collab.name}
-              role={collab.role}
-              state={collab.state}
-              photoUrl={collab.photoUrl}
-              link={collab.link}
-            />
-          ))
-        ) : (
-          params.state === 'todos' ? (
-            Object.values(COLLABORATORS).map((collab, index) => (
-              <CollaboratorsCard
-                key={index}
-                name={collab.name}
-                role={collab.role}
-                state={collab.state}
-                photoUrl={collab.photoUrl}
-                link={collab.link}
-              />
-            ))
-          ) : (
-            <div className='col-span-3'>
-              <NotFound />
+          {currentUser?.role === 'admin' && (
+            <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-1.5 rounded-full border border-amber-100 shadow-sm animate-in fade-in zoom-in">
+              <ShieldCheck size={16} />
+              <span className="text-xs font-black uppercase tracking-wider">Modo Administrador Ativo</span>
             </div>
-          )
+          )}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-64 text-green-700 font-bold animate-pulse">
+            Carregando consultores...
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full'>
+            {collaborators.length > 0 ? (
+              collaborators.map((collab) => {
+                // Prevenção: Pega o _id do Mongo ou o id genérico
+                const safeId = collab._id || collab.id;
+
+                if (collab.role !== 'admin') {
+                  return (
+                    <CollaboratorsCard
+                      key={safeId}
+                      name={collab.name}
+                      role={collab.role === 'admin' ? 'ADMINISTRADOR' : 'CONSULTOR(A)'}
+                      state={collab.state}
+                      photoUrl="/favicon.ico"
+                      link={`/${collab.state}/${collab.login}`}
+                    />
+                  )
+                }
+              })
+            ) : (
+              <div className='col-span-1 md:col-span-2 lg:col-span-3'>
+                <NotFound />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
-  )
+  );
 }
