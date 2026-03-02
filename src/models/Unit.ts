@@ -6,4 +6,5 @@ const UnitSchema = new Schema({
   address: { type: String, required: true }
 });
 
-export default models.Unit || model('Unit', UnitSchema);
+const Unit: any = mongoose.models.Unit || mongoose.model('Unit', UnitSchema);
+export default Unit;

@@ -1,30 +1,86 @@
 import { NextResponse } from 'next/server';
-import { unitService } from '@/services/unitService';
+import dbConnect from '../../../lib/mongodb';
+import Unit from '../../../models/Unit';
+import AuditLog from '../../../models/AuditLog';
 
-// GET: Lista as unidades (Você já tem isso)
 export async function GET() {
   try {
-    const units = await unitService.getAll();
+    await dbConnect();
+    const units = await Unit.find().sort({ name: 1 }).lean();
+    
+    // Removido AuditLog do GET para evitar sobrecarga de logs e erros de busca
     return NextResponse.json(units);
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao carregar unidades' }, { status: 500 });
+    console.error("Erro GET Units:", error);
+    return NextResponse.json([], { status: 500 }); // Retorna array vazio para não quebrar o front
   }
 }
 
-// POST: Rota nova para o Admin cadastrar
 export async function POST(request: Request) {
   try {
+    await dbConnect();
     const body = await request.json();
+    const newUnit = await Unit.create(body);
     
-    // Validação básica
-    if (!body.id || !body.name || !body.address) {
-      return NextResponse.json({ error: 'Preencha todos os campos da unidade.' }, { status: 400 });
-    }
-
-    const newUnit = await unitService.create(body);
+    // CORREÇÃO: Ação era 'delete' e entidade 'collaborator' no seu código
+    await AuditLog.create({
+        action: 'create',
+        entity: 'unit',
+        description: `Unidade comercial criada`,
+        targetName: newUnit.name
+    });
     
-    return NextResponse.json(newUnit, { status: 201 });
+    return NextResponse.json({ success: true, data: newUnit }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("Erro POST Units:", error);
+    if (error.code === 11000) return NextResponse.json({ error: 'Sigla já existe' }, { status: 400 });
+    return NextResponse.json({ error: 'Erro ao criar unidade' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    await dbConnect();
+    const body = await request.json();
+    const { _id, ...updateData } = body;
+
+    if (!_id) return NextResponse.json({ error: 'ID ausente' }, { status: 400 });
+
+    const updatedUnit = await Unit.findByIdAndUpdate(_id, updateData, { new: true });
+    
+    await AuditLog.create({
+        action: 'update', // Corrigido de 'delete'
+        entity: 'unit',
+        description: `Unidade atualizada`,
+        targetName: updatedUnit?.name || 'ID: ' + _id
+    });
+    
+    return NextResponse.json({ success: true, data: updatedUnit });
+  } catch (error) {
+    return NextResponse.json({ error: 'Erro ao atualizar unidade' }, { status: 500 });
+  }
+}
+
+// DELETAR UNIDADE (DELETE)
+export async function DELETE(request: Request) {
+  try {
+    await dbConnect();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) return NextResponse.json({ error: 'ID ausente' }, { status: 400 });
+
+    await Unit.findByIdAndDelete(id);
+
+    await AuditLog.create({
+        action: 'delete',
+        entity: 'unit',
+        description: `Unidade removida do sistema`,
+        targetName: id
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Erro ao deletar unidade' }, { status: 500 });
   }
 }

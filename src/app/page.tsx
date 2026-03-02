@@ -2,19 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowRight, ShieldCheck, Map } from 'lucide-react';
-import InfoCard from '@/shared/components/StatesCard';
-import { Unit } from '@/types'; // Certifique-se de que o type Unit está exportado no seu types/index.ts
+import InfoCard from '../shared/components/StatesCard';
+import { Unit } from '../types'; 
 
 export default function HomePage() {
-    // Seus estados visuais
     const [showUnidades, setShowUnidades] = useState(false);
-    
-    // Nossos estados de dados da API
     const [units, setUnits] = useState<Unit[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Busca as unidades da nossa API
+        // Busca as unidades configuradas no MongoDB Atlas
         async function fetchUnits() {
             try {
                 const response = await fetch('/api/units');
@@ -28,53 +25,49 @@ export default function HomePage() {
                 setLoading(false);
             }
         }
-
         fetchUnits();
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-full py-12 bg-zinc-50">
+        <div className="flex flex-col items-center justify-center min-h-screen py-12 bg-zinc-50 font-sans">
 
-            {/* Identificação */}
-            <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full mb-6 border border-green-100">
+            {/* Identificação de Acesso Restrito */}
+            <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full mb-6 border border-green-100 animate-in fade-in slide-in-from-top-4 duration-700">
                 <ShieldCheck size={16} />
-                <span className="text-xs font-bold uppercase tracking-wider">Acesso Restrito - Comercial</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Acesso Restrito - Somos Empilhadeiras</span>
             </div>
 
-            {/* Apresentação */}
+            {/* Apresentação do Portal */}
             <div className="text-center max-w-2xl mb-12 px-4">
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
                     Portal de Unidades e <br />
-                    <span className="text-green-600">Relatórios Comerciais</span>
+                    <span className="text-green-600">Módulos Comerciais</span>
                 </h1>
-                <p className="text-lg text-slate-600 leading-relaxed">
-                    Bem-vindo ao centro de recursos da <strong>Somos Empilhadeiras</strong>.
-                    Selecione uma unidade abaixo para gerenciar seus relatórios e formulários.
+                <p className="text-lg text-slate-600 leading-relaxed font-medium">
+                    Selecione uma unidade abaixo para acessar o catálogo de relatórios, 
+                    comissões e ferramentas operacionais.
                 </p>
             </div>
 
-            {/* Botões */}
+            {/* Ações Principais */}
             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mb-20 px-4">
                 <button
                     onClick={() => {
                         setShowUnidades(!showUnidades);
-
-                        // O seu scroll suave
                         setTimeout(() => {
                             const element = document.getElementById('unidades');
                             if (element) {
                                 element.scrollIntoView({
                                     behavior: 'smooth',
-                                    block: 'center',
-                                    inline: 'nearest'
+                                    block: 'center'
                                 });
                             }
                         }, 300);
                     }}
-                    className="group flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl hover:shadow-green-900/20 hover:-translate-y-1 w-full sm:w-auto justify-center cursor-pointer"
+                    className="group flex items-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-xl hover:-translate-y-1 w-full sm:w-auto justify-center cursor-pointer"
                 >
                     <MapPin size={22} className={showUnidades ? "" : "group-hover:animate-bounce"} />
-                    {showUnidades ? "Fechar Mapa" : "Selecionar Unidade"}
+                    {showUnidades ? "Fechar Lista" : "Explorar Unidades"}
                     <ArrowRight size={20} className={`transition-transform duration-300 ${showUnidades ? "rotate-180" : "group-hover:translate-x-1"}`} />
                 </button>
 
@@ -84,52 +77,43 @@ export default function HomePage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-8 py-4 rounded-2xl font-bold text-lg transition-all w-full sm:w-auto justify-center"
                 >
-                    Suporte Técnico
+                    Suporte TI
                 </a>
             </div>
 
-            {/* Conteúdo Renderizado Condicionalmente */}
+            {/* Renderização das Unidades */}
             <div id="unidades" className="w-full max-w-6xl flex items-center justify-center px-4">
                 {showUnidades ? (
                     loading ? (
-                        // Mostra o loading enquanto a API responde
-                        <div className="flex items-center justify-center h-64 text-green-700 font-bold animate-pulse">
-                            Carregando unidades...
+                        <div className="flex items-center justify-center h-64 text-green-700 font-black animate-pulse uppercase tracking-widest">
+                            Sincronizando unidades...
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full animate-in fade-in zoom-in-95 duration-500">
                             
-                            {/* Card Fixo de "TODOS" com a sua animação (Índice 0) */}
-                            <div
-                                className="flex justify-center items-center animate-slide-right opacity-0"
-                                style={{
-                                    animationDelay: `0s`,
-                                    animationFillMode: 'forwards'
-                                }}
-                            >
+                            {/* Card Dinâmico: Todas as Unidades (Admin) */}
+                            <div className="flex justify-center items-center">
                                 <InfoCard
-                                    state="TODOS"
-                                    address="Acesse as informações de todas as unidades"
-                                    link="/todos"
-                                    mapState="TODOS"
+                                    state="TODAS"
+                                    address="Visão consolidada de todas as operações"
+                                    link="/admin"
+                                    mapState="TODAS"
                                 />
                             </div>
 
-                            {/* Cards Dinâmicos vindos da API */}
+                            {/* Unidades do Banco de Dados */}
                             {units.map((unit, index) => (
                                 <div
                                     key={unit.id}
-                                    className="flex justify-center items-center animate-slide-right opacity-0"
+                                    className="flex justify-center items-center"
                                     style={{
-                                        // index + 1 para o atraso (delay) contar após o card "TODOS"
-                                        animationDelay: `${(index + 1) * 0.07}s`,
-                                        animationFillMode: 'forwards'
+                                        animationDelay: `${(index + 1) * 0.1}s`,
                                     }}
                                 >
                                     <InfoCard
                                         state={unit.name}
                                         address={unit.address}
-                                        link={`/${unit.id}`}
+                                        link={`/${unit.id}`} // Rota direta para o estado
                                         mapState={unit.id.toUpperCase()} 
                                     />
                                 </div>
@@ -137,10 +121,9 @@ export default function HomePage() {
                         </div>
                     )
                 ) : (
-                    // A sua mensagem de "Aguardando"
-                    <div className="flex flex-col items-center text-slate-300 transition-opacity duration-500 opacity-100">
-                        <Map size={80} strokeWidth={1} className="mb-4 opacity-60" />
-                        <p className="font-medium tracking-wide italic">Aguardando seleção de unidade...</p>
+                    <div className="flex flex-col items-center text-slate-300 opacity-60">
+                        <Map size={80} strokeWidth={1} className="mb-4" />
+                        <p className="font-bold tracking-wide italic">Aguardando seleção de unidade comercial...</p>
                     </div>
                 )}
             </div>

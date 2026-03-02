@@ -1,148 +1,130 @@
 import * as React from 'react';
-import { Section, Row, Column, Text, Tailwind, Html, Head, Body, Container, Heading, Hr, Link, Img } from "@react-email/components";
-import { FormValuesProps } from './forms/DespesasForm';
+import { Section, Row, Column, Text, Tailwind, Html, Head, Body, Container, Heading, Hr, Link, Img, Preview, Button } from "@react-email/components";
 
-interface EmailTemplateProps {
-    data: FormValuesProps;
+export interface BaseEmailProps {
+    previewText?: string;
+    title: string;
+    greeting?: string;
+    paragraphs: string[];
+    summaryData?: {
+        label: string; 
+        value: string | number; 
+        isHighlight?: boolean;
+    }[];
+    charts?: string[]; // ADICIONADO: Suporte a gráficos no e-mail
+    callToAction?: {
+        text: string;
+        url: string;
+    };
 }
 
-export default function Email({ data }: EmailTemplateProps) {
+export default function BaseEmail({ 
+    previewText = "Nova notificação da Somos Empilhadeiras", 
+    title, 
+    greeting, 
+    paragraphs, 
+    summaryData,
+    charts, 
+    callToAction 
+}: BaseEmailProps) {
     return (
         <Html>
+            <Preview>{previewText}</Preview>
             <Tailwind>
                 <Head>
-
-                    {/* CABEÇALHO */}
                     <Section className="my-2 px-8 py-6">
                         <Row>
                             <Column className="w-[80%]">
                                 <Link href="https://somosempilhadeiras.com/">
-                                    <Img
-                                        alt="Logo Somos Empilhadeiras"
-                                        height="42"
-                                        src="https://i.imgur.com/wMNkJrW.png"
-                                    />
+                                    <Img alt="Logo Somos Empilhadeiras" height="42" src="https://i.imgur.com/wMNkJrW.png" />
                                 </Link>
                             </Column>
                             <Column align="right">
                                 <Row align="right">
-                                    <Column className="px-2">
-                                        <Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/sobre">
-                                            Sobre
-                                        </Link>
-                                    </Column>
-                                    <Column className="px-2">
-                                        <Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/">
-                                            Empresa
-                                        </Link>
-                                    </Column>
-                                    <Column className="px-2">
-                                        <Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/">
-                                            Catalogo
-                                        </Link>
-                                    </Column>
+                                    <Column className="px-2"><Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/sobre">Sobre</Link></Column>
+                                    <Column className="px-2"><Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/">Empresa</Link></Column>
+                                    <Column className="px-2"><Link className="text-gray-600 [text-decoration:none]" href="https://somosempilhadeiras.com/">Catalogo</Link></Column>
                                 </Row>
                             </Column>
                         </Row>
                     </Section>
                 </Head>
 
-                {/* DIVIDOR */}
                 <Hr className="border-[#67DB1A] border-t-4" />
 
                 <Body className="bg-white my-auto mx-auto font-sans">
-
-                    {/* CONTEÚDO DO EMAIL (Mantém no Container para ficar centralizado) */}
-                    <Container className="border border-solid border-[#eaeaea] rounded my-10 mx-auto p-5 w-116.25">
+                    <Container className="border border-solid border-[#eaeaea] rounded my-10 mx-auto p-8 w-116.25 shadow-sm">
                         
-                        <Section className="mt-8">
-                            <Heading className="text-[#15803d] text-[22px] font-bold text-center m-0 mb-4">
-                                Novo Relatório de Despesa Recebido
+                        <Section className="mt-4">
+                            <Heading className="text-[#15803d] text-[22px] font-black text-center m-0 mb-6 uppercase tracking-tight">
+                                {title}
                             </Heading>
 
-                            <Text className="text-gray-600 text-[14px] leading-6 mb-4">
-                                Prezada equipe financeira,
-                            </Text>
-                            <Text className="text-gray-600 text-[14px] leading-6 mb-4">
-                                Informamos que um novo formulário de prestação de contas foi submetido através do Portal Comercial.
-                                O colaborador <strong>{data.nome}</strong> registrou uma despesa relacionada a atividades externas e solicita a conferência para fins de reembolso ou baixa de adiantamento.
-                            </Text>
-                            <Text className="text-gray-600 text-[14px] leading-6 mb-6">
-                                Abaixo segue um resumo rápido dos dados lançados. O documento completo (PDF), contendo o comprovante fiscal digitalizado e maiores detalhes, encontra-se <strong>em anexo</strong> a este e-mail.
-                            </Text>
+                            {greeting && <Text className="text-gray-800 text-[16px] font-bold mb-4">{greeting}</Text>}
+
+                            {paragraphs.map((text, index) => (
+                                <Text key={index} className="text-gray-600 text-[15px] leading-relaxed mb-4">{text}</Text>
+                            ))}
                         </Section>
 
-                        <Section>
-                            <Row>
-                                <Column><Text className="text-gray-500 text-xs uppercase">Valor</Text></Column>
-                                <Column align='right'><Text className="text-[#15803d] font-bold text-lg">R$ {Number(data.valor_cupom).toFixed(2)}</Text></Column>
-                            </Row>
-                            <Hr className="border border-solid border-[#eaeaea] my-2.5 mx-0 w-full" />
-                            <Row>
-                                <Column><Text className="text-gray-500 text-xs uppercase">Tipo</Text></Column>
-                                <Column align='right'><Text className="text-black text-sm">{data.tipo_despesa}</Text></Column>
-                            </Row>
-                            <Row>
-                                <Column><Text className="text-gray-500 text-xs uppercase">Estabelecimento</Text></Column>
-                                <Column align='right'><Text className="text-black text-sm">{data.nome_estabelecimento}</Text></Column>
-                            </Row>
-                        </Section>
+                        {/* RESUMO DE DADOS */}
+                        {summaryData && summaryData.length > 0 && (
+                            <Section className="bg-slate-50 p-6 rounded-xl mt-6 border border-slate-100">
+                                {summaryData.map((item, index) => (
+                                    <React.Fragment key={index}>
+                                        <Row className="my-2">
+                                            <Column><Text className="text-gray-500 text-xs font-bold uppercase tracking-wider m-0">{item.label}</Text></Column>
+                                            <Column align='right'>
+                                                <Text className={`m-0 text-sm ${item.isHighlight ? 'text-[#15803d] font-black text-lg' : 'text-slate-800 font-semibold'}`}>
+                                                    {item.value}
+                                                </Text>
+                                            </Column>
+                                        </Row>
+                                        {index < summaryData.length - 1 && <Hr className="border border-solid border-slate-200 my-3 mx-0 w-full" />}
+                                    </React.Fragment>
+                                ))}
+                            </Section>
+                        )}
+
+                        {/* GRÁFICOS DIRETO NO CORPO DO E-MAIL */}
+                        {charts && charts.length > 0 && (
+                            <Section className="mt-8 mb-4">
+                                <Heading className="text-[#15803d] text-[14px] font-bold text-center m-0 mb-4 uppercase tracking-widest border-b border-slate-100 pb-4">
+                                    Análise Gráfica de Desempenho
+                                </Heading>
+                                {charts.map((url, idx) => (
+                                    <Img key={idx} src={url} width="100%" style={{ marginBottom: '16px', borderRadius: '8px', border: '1px solid #f1f5f9' }} />
+                                ))}
+                            </Section>
+                        )}
+
+                        {callToAction && (
+                            <Section className="text-center mt-8 mb-4">
+                                <Button href={callToAction.url} className="bg-[#15803d] text-white font-bold px-6 py-3 rounded-lg text-sm tracking-wide">
+                                    {callToAction.text}
+                                </Button>
+                            </Section>
+                        )}
                     </Container>
 
-                    {/* CORREÇÃO DO FOOTER AQUI */}
-                    {/* 1. Removi o <Container> que envolvia o Footer para ele poder esticar */}
-                    {/* 2. Mudei o <Hr> para ser sutil e ocupar a largura toda */}
-                    
-                    <Section className="w-full bg-gray-100 border-t border-gray-200">
-                        <Container> {/* Container interno opcional apenas para centralizar o texto no meio da faixa cinza */}
+                    {/* FOOTER */}
+                    <Section className="w-full bg-slate-50 border-t border-slate-200">
+                        <Container>
                             <Section className="text-center px-8 py-10">
                                 <table className="w-full">
                                     <tr className="w-full">
-                                        <td align="center">
-                                            <Img
-                                                alt="Somos Empilhadeiras Logo"
-                                                height="42"
-                                                src="https://i.imgur.com/wMNkJrW.png"
-                                                className="mb-4" // Deixei a logo do footer mais discreta
-                                            />
-                                        </td>
+                                        <td align="center"><Img alt="Somos Empilhadeiras Logo" height="42" src="https://i.imgur.com/wMNkJrW.png" className="mb-4 grayscale opacity-50" /></td>
                                     </tr>
                                     <tr>
                                         <td align="center">
-                                            <Row className="table-cell h-11 w-14 align-bottom">
-                                                <Column className="pr-2">
-                                                    <Link href="https://www.facebook.com/p/Somos-Empilhadeiras-61554723444765/">
-                                                        <Img alt="Facebook" height="28" src="https://react.email/static/facebook-logo.png" width="28" className="grayscale opacity-60 hover:opacity-100" />
-                                                    </Link>
-                                                </Column>
-                                                <Column className="pr-2">
-                                                    <Link href="https://linkedin.com/somosempilhadeiras">
-                                                        <Img alt="Linkedin" height="28" src="https://react.email/static/x-logo.png" width="28" className="grayscale opacity-60 hover:opacity-100" />
-                                                    </Link>
-                                                </Column>
-                                                <Column>
-                                                    <Link href="https://www.instagram.com/somosempilhadeiras/">
-                                                        <Img alt="Instagram" height="28" src="https://react.email/static/instagram-logo.png" width="28" className="grayscale opacity-60 hover:opacity-100" />
-                                                    </Link>
-                                                </Column>
-                                            </Row>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td align="center">
-                                            <Text className="my-2 text-[12px] text-gray-400 leading-4">
-                                                Av. Caiapó, 1190 - Santa Genoveva, Goiânia - GO, 74672-400
-                                            </Text>
-                                            <Text className="mt-1 mb-0 text-[12px] text-gray-400 leading-4">
-                                                heli@somosempilhadeiras.com.br | (62) 99183-4188
-                                            </Text>
+                                            <Text className="my-2 text-[12px] text-gray-400 font-medium">Av. Caiapó, 1190 - Santa Genoveva, Goiânia - GO, 74672-400</Text>
+                                            <Text className="mt-1 mb-0 text-[12px] text-gray-400 font-medium">heli@somosempilhadeiras.com.br | (62) 99183-4188</Text>
                                         </td>
                                     </tr>
                                 </table>
                             </Section>
                         </Container>
                     </Section>
-
                 </Body>
             </Tailwind>
         </Html>

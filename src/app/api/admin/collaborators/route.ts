@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { collaboratorService } from '@/services/collaboratorService';
+import { collaboratorService } from '../../../../services/collaboratorService';
+import AuditLog from '../../../../models/AuditLog';
+
 
 export async function POST(request: Request) {
   try {
@@ -7,6 +9,13 @@ export async function POST(request: Request) {
 
     // O Service agora salvará direto no MongoDB
     const result = await collaboratorService.create(userData);
+
+    await AuditLog.create({
+        action: 'create',
+        entity: 'collaborator',
+        description: `Consultor cadastrado`,
+        targetName: result.name || 'ID: ' + result.id
+    });
 
     return NextResponse.json({ 
       message: 'Colaborador cadastrado com sucesso!', 

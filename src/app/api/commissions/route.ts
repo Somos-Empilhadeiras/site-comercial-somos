@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
-import { commissionService } from '@/services/commissionService';
+import dbConnect from '../../../lib/mongodb';
+import { commissionService } from '../../../services/commissionService';
+import AuditLog from '../../../models/AuditLog';
 
-// 1. LISTAR (GET) - Útil para carregar a tabela
+
+
+// 1. LISTAR (GET)
 export async function GET(request: Request) {
   try {
+    await dbConnect(); // CORREÇÃO: Necessário conectar ao banco antes de buscar
+    
     const { searchParams } = new URL(request.url);
     const collaboratorId = searchParams.get('collaboratorId');
     
@@ -11,15 +17,19 @@ export async function GET(request: Request) {
       ? await commissionService.getByCollaborator(collaboratorId)
       : await commissionService.getAll();
 
+    // DICA: Evite registrar 'read' no AuditLog para não sobrecarregar o banco, 
+    // ou adicione 'read' ao enum do seu Model AuditLog.ts
     return NextResponse.json(data);
   } catch (error) {
+    console.error("Erro no GET Commissions:", error);
     return NextResponse.json({ error: 'Erro ao buscar dados' }, { status: 500 });
   }
 }
 
-// 2. CRIAR (POST) - Com sanitização de valores
+// 2. CRIAR (POST)
 export async function POST(request: Request) {
   try {
+    await dbConnect();
     const body = await request.json();
     const { rawText, collaboratorId, mapping } = body;
 
@@ -27,8 +37,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
-    // O Service processa. DICA: Verifique a lógica de parse no commissionService.ts
     const newCommissions = await commissionService.processExcelPaste(rawText, collaboratorId, mapping);
+
+    await AuditLog.create({
+        action: 'create', // CORREÇÃO: Era 'delete'
+        entity: 'commission',
+        description: `Importação de ${newCommissions.length} lançamentos via planilha`,
+        targetName: collaboratorId
+    });
 
     return NextResponse.json({ success: true, count: newCommissions.length });
   } catch (error) {
@@ -37,32 +53,49 @@ export async function POST(request: Request) {
   }
 }
 
-// 3. EDITAR (PUT) - Para ajustes manuais em lançamentos específicos
+// 3. EDITAR (PUT)
 export async function PUT(request: Request) {
   try {
+    await dbConnect();
     const body = await request.json();
-    const { id, updateData } = body; // id da comissão no MongoDB
+    const { id, updateData } = body;
 
     if (!id || !updateData) {
       return NextResponse.json({ error: 'ID ou dados ausentes' }, { status: 400 });
     }
 
     const updated = await commissionService.update(id, updateData);
+
+    await AuditLog.create({
+        action: 'update', // CORREÇÃO: Era 'delete'
+        entity: 'commission',
+        description: `Edição manual de lançamento`,
+        targetName: updated?.cliente || 'ID: ' + id // Ajustado para 'cliente' pois comissão não tem 'name'
+    });
+
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao editar lançamento' }, { status: 500 });
   }
 }
 
-// 4. DELETAR (DELETE) - Para remover erros de importação
+// 4. DELETAR (DELETE)
 export async function DELETE(request: Request) {
   try {
+    await dbConnect();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 });
+
+    const comissionToDelete = await commissionService.getByCollaborator(id);
+
+    await AuditLog.create({
+        action: 'delete',
+        entity: 'commission',
+        description: `Exclusão permanente de lançamento`,
+        targetName: comissionToDelete || 'ID: ' + id
+    });
 
     await commissionService.delete(id);
     return NextResponse.json({ success: true, message: 'Lançamento removido' });

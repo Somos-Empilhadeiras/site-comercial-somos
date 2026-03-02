@@ -1,107 +1,117 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import CollaboratorsCard from '@/shared/components/CollaboratorsCard';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import NotFound from '../not-found';
+import React, { useEffect, useState, use } from 'react';
+import { ArrowLeft, Lock, LockKeyhole, Info } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as Icons from "lucide-react";
+import InfoCard from '../../shared/components/StatesCard';
 
-// Tipagem limpa, sem dependências do backend!
-interface CollaboratorData {
-  _id?: string;
-  id?: string;
-  name: string;
-  login: string;
-  role: string;
-  state: string;
-}
+const STATE_CONFIG: Record<string, { name: string }> = {
+    go: { name: 'GOIÁS' },
+    ba: { name: 'BAHIA' },
+    df: { name: 'DISTRITO FEDERAL' },
+    to: { name: 'TOCANTINS' },
+    pe: { name: 'PERNAMBUCO' },
+};
 
-export default function ComercialPage() {
-  const params = useParams();
-  const stateParam = (params.state as string) || '';
+export default function UnidadesIdPage({ params }: { params: Promise<{ state: string }> }) {
+    const resolvedParams = use(params);
+    const router = useRouter();
 
-  const [collaborators, setCollaborators] = useState<CollaboratorData[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+    const currentStateKey = resolvedParams.state || '';
+    const currentData = STATE_CONFIG[currentStateKey] || { name: currentStateKey.toUpperCase() };
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [cards, setCards] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-        const sessionRes = await fetch('/api/auth/me');
-        if (sessionRes.ok) {
-          const sessionData = await sessionRes.json();
-          setCurrentUser(sessionData.user);
-        }
-
-        const url = stateParam === 'todos' ? '/api/collaborators' : `/api/collaborators?state=${stateParam}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Falha ao buscar colaboradores');
-
-        const data = await response.json();
-        setCollaborators(data);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (stateParam) fetchData();
-  }, [stateParam]);
-
-  return (
-    <div className="py-10 min-h-screen bg-zinc-50">
-      <div className="max-w-6xl mx-auto px-4">
-
-        <div className="flex mb-6 items-center justify-between">
-          <Link href={`/`} className="p-2 flex items-center gap-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-green-700 transition-colors font-bold w-fit">
-            <ArrowLeft size={20} />
-            <p>Voltar</p>
-          </Link>
-
-          {currentUser?.role === 'admin' && (
-            <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-1.5 rounded-full border border-amber-100 shadow-sm animate-in fade-in zoom-in">
-              <ShieldCheck size={16} />
-              <span className="text-xs font-black uppercase tracking-wider">Modo Administrador Ativo</span>
-            </div>
-          )}
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center h-64 text-green-700 font-bold animate-pulse">
-            Carregando consultores...
-          </div>
-        ) : (
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full'>
-            {collaborators.length > 0 ? (
-              collaborators.map((collab) => {
-                // Prevenção: Pega o _id do Mongo ou o id genérico
-                const safeId = collab._id || collab.id;
-
-                if (collab.role !== 'admin') {
-                  return (
-                    <CollaboratorsCard
-                      key={safeId}
-                      name={collab.name}
-                      role={collab.role === 'admin' ? 'ADMINISTRADOR' : 'CONSULTOR(A)'}
-                      state={collab.state}
-                      photoUrl="/favicon.ico"
-                      link={`/${collab.state}/${collab.login}`}
-                    />
-                  )
+    useEffect(() => {
+        async function fetchStateData() {
+            try {
+                // 1. Busca quem está logado (para checar permissões)
+                const sessionRes = await fetch('/api/auth/me');
+                if (sessionRes.ok) {
+                    const sessionData = await sessionRes.json();
+                    setCurrentUser(sessionData.user);
                 }
-              })
-            ) : (
-              <div className='col-span-1 md:col-span-2 lg:col-span-3'>
-                <NotFound />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+
+                // 2. Busca TODOS os cards cadastrados para esta unidade
+                const cardsRes = await fetch(`/api/cards?state=${currentStateKey}`);
+                if (cardsRes.ok) {
+                    const data = await cardsRes.json();
+                    setCards(data);
+                }
+            } catch (error) {
+                console.error("Erro ao carregar unidade:", error);
+            } finally {
+                setLoading(false); 
+            }
+        }
+        fetchStateData();
+    }, [currentStateKey]);
+
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-green-700 animate-pulse font-bold">
+            Sincronizando Módulos...
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col gap-12 items-center justify-start bg-zinc-50 font-sans py-10 min-h-screen">
+            
+            {/* Cabeçalho */}
+            <div className="flex flex-col text-center gap-2 px-4">
+                <h1 className="text-3xl md:text-4xl font-black text-green-900 uppercase leading-tight">
+                    Unidade {currentData.name} <br />
+                    <span className="text-lg text-slate-500 font-bold">Selecione um serviço ou módulo</span>
+                </h1>
+            </div>
+
+            <div className="flex w-full px-4 justify-start max-w-6xl">
+                <Link href="/" className="p-2 flex items-center gap-2 rounded-lg hover:bg-gray-200 text-gray-500 font-bold transition-all">
+                    <ArrowLeft size={20} /> Voltar para Unidades
+                </Link>
+            </div>
+
+            {/* Grid de Cards com Lógica de Cadeado */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl px-4">
+                {cards.map((card) => {
+                    const IconComponent = (Icons as any)[card.icon] || Info;
+                    
+                    // Lógica de Bloqueio:
+                    const isUnauthorized = card.isLocked && (!currentUser || !currentUser.activeCards?.includes(card.id));
+
+                    // --- CORREÇÃO DA ROTA AQUI ---
+                    // Tira a barra inicial do card.url (se existir) para não duplicar na URL final
+                    const cleanUrl = card.url?.replace(/^\//, '') || '';
+                    
+                    // Pega o nome do colaborador (ou login) para montar a URL
+                    const collaboratorParam = currentUser?.name || currentUser?.login || 'usuario';
+
+                    // Monta o link correto dependendo se ele tem acesso ou não
+                    const authorizedLink = `/${currentStateKey}/${collaboratorParam}/${cleanUrl}`;
+                    const unauthorizedLink = `/login?callbackUrl=/${currentStateKey}/${cleanUrl}`;
+                    // -----------------------------
+
+                    return (
+                        <div key={card._id} className="relative group">
+                            <InfoCard
+                                state={card.title}
+                                address={card.description}
+                                link={isUnauthorized ? unauthorizedLink : authorizedLink}
+                                iconElem={isUnauthorized ? Lock : IconComponent}
+                            />
+                            
+                            {isUnauthorized && (
+                                <div className="absolute top-4 right-4 bg-red-500 text-white p-1.5 rounded-full shadow-lg">
+                                    <LockKeyhole size={14} />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
 }

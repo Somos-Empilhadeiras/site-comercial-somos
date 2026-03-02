@@ -1,11 +1,11 @@
-import dbConnect from '@/lib/mongodb';
-import Commission from '@/models/Commission';
+import dbConnect from "../lib/mongodb";
+import Commission from "../models/Commission";
 
 export const commissionService = {
   // Busca todos os lançamentos (Útil para o AdminGlobal)
   async getAll() {
     await dbConnect();
-    return await Commission.find({}).lean();
+    return await Commission.find().lean();
   },
 
   // NOVO: Busca lançamentos específicos de um consultor

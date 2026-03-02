@@ -80,7 +80,7 @@ export default function LoginPage() {
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-zinc-50 focus:bg-white"
-                placeholder="Ex: khryss-mylla"
+                placeholder="joao.silva@somosempilhadeiras.com.br"
                 required
               />
             </div>

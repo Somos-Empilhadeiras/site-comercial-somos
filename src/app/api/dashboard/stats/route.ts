@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { commissionService } from '@/services/commissionService';
+import { commissionService } from '../../../../services/commissionService';
+import AuditLog from '../../../../models/AuditLog';
+
 
 export async function GET(request: Request) {
   try {
@@ -15,6 +17,13 @@ export async function GET(request: Request) {
       commissionService.getSummary(userId),
       commissionService.getEvolutionData(userId)
     ]);
+
+    await AuditLog.create({
+        action: 'read',
+        entity: 'dashboard',
+        description: `Estatísticas do usuário ${userId} visualizadas`,
+        targetName: userId
+    });
 
     return NextResponse.json({ summary, evolution });
   } catch (error) {

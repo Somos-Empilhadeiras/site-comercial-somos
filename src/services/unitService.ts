@@ -1,10 +1,10 @@
-import dbConnect from '@/lib/mongodb';
-import Unit from '@/models/Unit';
+import dbConnect from "../lib/mongodb";
+import Unit from "../models/Unit";
 
 export const unitService = {
   async getAll() {
     await dbConnect();
-    return await Unit.find({}).lean();
+    return await Unit.find().lean();
   },
   
   async getById(id: string) {

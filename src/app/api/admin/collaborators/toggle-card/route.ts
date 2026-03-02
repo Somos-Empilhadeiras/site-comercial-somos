@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { cardService } from '@/services/cardService';
+import { cardService } from '../../../../../services/cardService';
+import AuditLog from '../../../../../models/AuditLog';
+
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +16,13 @@ export async function POST(request: Request) {
     if (!success) {
       return NextResponse.json({ error: 'Erro ao atualizar visibilidade no banco' }, { status: 500 });
     }
+
+    await AuditLog.create({
+        action: 'toggle',
+        entity: 'collaborator-card',
+        description: `Visibilidade do card alterada`,
+        targetName: `${collaboratorId}-${cardId}`
+    });
 
     return NextResponse.json({ message: 'Visibilidade atualizada com sucesso!' });
   } catch (error) {

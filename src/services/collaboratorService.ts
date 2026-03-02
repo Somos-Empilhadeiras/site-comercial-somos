@@ -1,5 +1,6 @@
-import dbConnect from '@/lib/mongodb';
-import Collaborator from '@/models/Collaborator';
+
+import dbConnect from '../lib/mongodb';
+import Collaborator from '../models/Collaborator';
 import { CollaboratorData } from '../types';
 
 export const collaboratorService = {

@@ -4,6 +4,7 @@ import { Page, Text, View, Document, StyleSheet, PDFDownloadLink, Image } from '
 import { useParams } from 'next/navigation';
 import "@/app/globals.css";
 import { ChevronsLeftIcon, ChevronsRightIcon, DownloadIcon, MailIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 const styles = StyleSheet.create({
   page: {
@@ -313,14 +314,14 @@ const DespesasForm = ({ name, email }: { name: string, email: string }) => {
       });
       
       if (response.ok) {
-        alert('Relatório enviado com sucesso!');
+        toast.success('Relatório enviado com sucesso!');
         window.location.reload();
       } else {
-        alert('Erro ao enviar.');
+        toast.error('Erro ao enviar.');
       }
     } catch (error) {
       console.error(error);
-      alert('Erro de conexão.');
+      toast.error('Erro de conexão.');
     }
   }
 

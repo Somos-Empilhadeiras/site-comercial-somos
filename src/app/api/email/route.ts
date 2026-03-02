@@ -1,19 +1,8 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
-import Email from '@/shared/components/Email';
-import { renderToBuffer } from '@react-pdf/renderer'; 
-import DespesaDocument from '@/shared/components/PDFComponent';
-
-// Importe ou defina a constante aqui para a API ter acesso
-export const COLLABORATORS_DATA: Record<string, any> = {
-  "khryss-mylla": { name: "KHRYSS MYLLA", email: "heli@somosempilhadeiras.com.br" },
-  "lais-toledo": { name: "LAIS TOLEDO", email: "lais@somosempilhadeiras.com.br" },
-  "aguinaldo-lemes": { name: "AGUINALDO LEMES", email: "aguinaldo@somosempilhadeiras.com.br" },
-  "ezequiel": { name: "EZEQUIEL", email: "ezequiel@somosempilhadeiras.com.br" },
-  "tiago-freua": { name: "TIAGO FREUA", email: "tiago@somosempilhadeiras.com.br" },
-  "rafael-gomes": { name: "RAFAEL GOMES", email: "rafael@somosempilhadeiras.com.br" },
-  "jose-henrique": { name: "JOSÉ HENRIQUE", email: "josehenrique@somosempilhadeiras.com.br" },
-};
+import { renderToBuffer } from '@react-pdf/renderer';
+import DespesaDocument from '../../../shared/components/PDFComponent';
+import Email from '../../../shared/components/Email';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

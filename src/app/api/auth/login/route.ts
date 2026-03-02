@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { collaboratorService } from '@/services/collaboratorService';
+import { collaboratorService } from '../../../../services/collaboratorService';
+import AuditLog from '../../../../models/AuditLog';
+
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +24,13 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 // 1 dia
+    });
+
+    await AuditLog.create({
+        action: 'login',
+        entity: 'collaborator',
+        description: `Consultor logado no sistema`,
+        targetName: user.name || 'ID: ' + user.id
     });
 
     return response;

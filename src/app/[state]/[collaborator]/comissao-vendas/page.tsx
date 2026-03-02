@@ -3,8 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import { AlertCircle, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-// VERIFIQUE: O nome do arquivo na pasta é CommissionsDashboard ou ComissoesDashboard?
-import CommissionDashboard from '@/shared/components/CommissionsDashboard';
+import CommissionDashboard from '../../../../shared/components/CommissionsDashboard';
 
 export default function ComissaoVendasPage({ params }: { params: Promise<{ state: string, collaborator: string }> }) {
     const router = useRouter();
@@ -20,15 +19,20 @@ export default function ComissaoVendasPage({ params }: { params: Promise<{ state
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // 1. Busca colaborador (com verificação de tipo de conteúdo)
+                // 1. Busca colaborador
                 const collabRes = await fetch('/api/collaborators');
                 if (!collabRes.ok) throw new Error("Erro ao acessar API de colaboradores");
 
                 const collabs = await collabRes.json();
-                const user = collabs.find((c: any) => c.login === collaboratorSlug);
+
+                // CORREÇÃO AQUI: Busca pelo 'name' OU pelo 'login', convertendo tudo para minúsculo
+                const user = collabs.find((c: any) =>
+                    c.name?.toLowerCase() === collaboratorSlug.toLowerCase() ||
+                    c.login?.toLowerCase() === collaboratorSlug.toLowerCase()
+                );
 
                 if (user) {
-                    // 2. Busca comissões (Garanta que o nome da pasta é 'comissions')
+                    // 2. Busca comissões
                     const commRes = await fetch('/api/commissions', { cache: 'no-store' });
                     if (commRes.ok && commRes.headers.get('content-type')?.includes('application/json')) {
                         const allData = await commRes.json();
@@ -60,6 +64,8 @@ export default function ComissaoVendasPage({ params }: { params: Promise<{ state
             <button onClick={() => router.back()} className="text-green-700 underline">Voltar</button>
         </div>
     );
+
+    console.log("DADOS DA MYLLA: ", commissions);
 
     return (
         <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8">
