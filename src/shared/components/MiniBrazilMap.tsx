@@ -11,7 +11,7 @@ const STATE_MAP_CONFIG: Record<string, { scale: number, center: [number, number]
   'TO': { scale: 2900, center: [-48, -10] },
   'BA': { scale: 2200, center: [-41.5, -12.5] },
   'PE': { scale: 4000, center: [-37, -8.3] },
-  'TODOS': { scale: 620, center: [-54, -15] } // Visão geral do Brasil
+  'TODOS': { scale: 900, center: [-54, -15] } // Visão geral do Brasil
 };
 
 interface MiniMapProps {
@@ -36,7 +36,6 @@ export default function MiniBrazilMap({ activeState, activeStates }: MiniMapProp
           scale: config.scale,
           center: config.center
         }}
-        // Remove interatividade, é só visual
         style={{ width: "100%", height: "100%", pointerEvents: 'none' }}
       >
         <Geographies geography={GEO_URL}>

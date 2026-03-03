@@ -3,15 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, usePathname } from 'next/navigation'; // Adicione usePathname aqui
+import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, User as UserIcon, Shield } from 'lucide-react';
 
 export default function NavBar() {
     const router = useRouter();
-    const pathname = usePathname(); // Captura a rota atual
+    const pathname = usePathname(); 
     const [user, setUser] = useState<any>(null);
 
-    // Agora o NavBar verifica a sessão toda vez que o usuário muda de página
     useEffect(() => {
         async function checkSession() {
             try {
@@ -27,16 +26,15 @@ export default function NavBar() {
             }
         }
         checkSession();
-    }, [pathname]); // <--- A MÁGICA ESTÁ AQUI: o useEffect roda sempre que o pathname mudar
+    }, [pathname]);
 
     const handleLogout = async () => {
         try {
-            // Chama a API de logout no servidor
             const res = await fetch('/api/auth/logout', { method: 'POST' });
 
             if (res.ok) {
                 setUser(null);
-                router.refresh(); // Limpa o cache das rotas
+                router.refresh(); 
                 router.push('/login');
             }
         } catch (err) {
@@ -49,16 +47,47 @@ export default function NavBar() {
             <nav className="bg-white border-b-4 border-[#005831] shadow-lg flex justify-center items-center h-20">
                 <div className="container w-full max-w-[80%] flex justify-between items-center">
 
+                    {/* LOGO */}
                     <Link href="/">
                         <Image src="/logo.png" alt="Logo" width={120} height={50} className="w-30 md:w-[150px] object-contain" />
                     </Link>
 
+                    {/* LINKS DE NAVEGAÇÃO INTELIGENTES */}
                     <div className="hidden md:flex items-center gap-6">
-                        <Link href="/" className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors">Início</Link>
-                        <Link href="/unidades" className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors">Unidades</Link>
-                        <Link href="https://somosempilhadeiras.com" className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors">Site</Link>
+                        <Link href="/" className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors">
+                            Início
+                        </Link>
+
+                        {/* Aparece só se for ADMIN */}
+                        {user?.role === 'admin' && (
+                            <Link href="/admin" className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors">
+                                Painel Admin
+                            </Link>
+                        )}
+
+                        {/* Aparece só se for CONSULTOR logado */}
+                        {user && user?.role !== 'admin' && (
+                            <Link 
+                                // Monta a URL dinamicamente com o estado e nome do consultor
+                                href={`/${user.state || 'go'}/${encodeURIComponent(user.name || user.login)}/comissao-vendas`} 
+                                className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors"
+                            >
+                                Minhas Comissões
+                            </Link>
+                        )}
+
+                        {/* SITE OFICIAL (Abrindo em nova aba para não tirar o usuário do sistema) */}
+                        <Link 
+                            href="https://somosempilhadeiras.com" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-sm font-bold text-gray-700 hover:text-green-700 transition-colors"
+                        >
+                            Site Institucional
+                        </Link>
                     </div>
 
+                    {/* ÁREA DO USUÁRIO */}
                     <div className="flex items-center gap-4">
                         {user ? (
                             <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 shadow-sm animate-in fade-in duration-300">

@@ -46,13 +46,13 @@ export default function AdminSidebar({ activeTab, setActiveTab, isSidebarOpen, s
             </div>
             <nav className="flex-1 space-y-2 overflow-y-auto mt-6">
                 <NavItem id="dashboard" icon={LayoutDashboard} label="Visão Global" />
-                <NavItem id="activity" icon={History} label="Histórico de Ações" />
                 <NavItem id="records" icon={List} label="Extrato Geral" />
                 <NavItem id="upload" icon={FileSpreadsheet} label="Importar Dados" />
                 <NavItem id="permissions" icon={Users} label="Gestão de Acessos" />
                 <NavItem id="register" icon={UserPlus} label="Novo Consultor" />
                 <NavItem id="units" icon={MapPin} label="Nova Unidade" />
                 <NavItem id="cards" icon={LayoutTemplate} label="Novo Módulo" />
+                <NavItem id="activity" icon={History} label="Histórico de Ações" />
             </nav>
             <div className="p-4 border-t border-gray-100 mb-4">
                 <button onClick={handleLogout} className={`flex items-center ${isSidebarOpen ? 'justify-center gap-3' : 'justify-center'} text-gray-400 hover:text-red-600 font-bold transition-all py-4 rounded-xl hover:bg-red-50 w-full`}>

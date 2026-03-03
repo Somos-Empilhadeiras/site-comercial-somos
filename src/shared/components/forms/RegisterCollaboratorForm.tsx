@@ -26,7 +26,7 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                 fetch('/api/collaborators'),
                 fetch('/api/units')
             ]);
-            
+
             if (usersRes.ok) setUsers(await usersRes.json());
             if (unitsRes.ok) setUnits(await unitsRes.json());
         } catch (error) {
@@ -57,8 +57,8 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
             setMessage({ type: 'success', text: 'Consultor cadastrado com sucesso!' });
             setUserForm({ name: '', login: '', password: '', state: '', role: 'user' });
             fetchData();
-            if (onUserCreated) onUserCreated(); 
-        } catch (err: any) { setMessage({ type: 'error', text: err.message }); } 
+            if (onUserCreated) onUserCreated();
+        } catch (err: any) { setMessage({ type: 'error', text: err.message }); }
         finally { setLoading(false); }
     };
 
@@ -68,7 +68,7 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
             const res = await fetch(`/api/collaborators?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchData();
-                if (onUserCreated) {onUserCreated(); toast.success("Usuário excluído com sucesso!"); }
+                if (onUserCreated) { onUserCreated(); toast.success("Usuário excluído com sucesso!"); }
             } else throw new Error("Erro ao excluir");
         } catch (error) { toast.error("Não foi possível excluir o usuário."); }
     };
@@ -92,7 +92,7 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
 
     return (
         <div className="space-y-10 w-full animate-in slide-in-from-bottom-4 duration-500">
-            
+
             {/* 1. TABELA DE USUÁRIOS CADASTRADOS */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
@@ -122,7 +122,11 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                                     <tr key={user._id} className="hover:bg-slate-50 transition-colors group">
                                         <td className="p-5">
                                             <p className="font-bold text-sm text-slate-800">{user.name}</p>
-                                            <p className="text-xs text-slate-500 font-mono mt-0.5">Login: {user.login}</p>
+                                            {user.name !== 'Admin Master' &&
+                                                (
+                                                    <p className="text-xs text-slate-500 font-mono mt-0.5">Login: {user.login}</p>
+                                                )
+                                            }
                                         </td>
                                         <td className="p-5 text-center">
                                             <span className="text-xs font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-lg uppercase border border-slate-200">
@@ -135,12 +139,17 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                                             </span>
                                         </td>
                                         <td className="p-5 text-center flex justify-center gap-4 mt-2">
-                                            <button onClick={() => setEditingUser(user)} className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors" title="Editar">
-                                                <Edit size={16} />
-                                            </button>
-                                            <button onClick={() => handleDeleteUser(user._id)} className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Excluir">
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {user.name !== 'Admin Master' && (
+                                                <>
+                                                    <button onClick={() => setEditingUser(user)} className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors" title="Editar">
+                                                        <Edit size={16} />
+                                                    </button>
+
+                                                    <button onClick={() => handleDeleteUser(user._id)} className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Excluir">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -169,41 +178,41 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                 <form onSubmit={handleCreateSubmit} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700 uppercase">Nome Completo</label>
-                        <input 
-                            type="text" required 
-                            value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} 
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800" 
-                            placeholder="Ex: João da Silva" 
+                        <input
+                            type="text" required
+                            value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-800"
+                            placeholder="Ex: João da Silva"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-700 uppercase">Login de Acesso</label>
-                            <input 
-                                type="email" 
-                                required 
-                                value={userForm.login} onChange={(e) => setUserForm({ ...userForm, login: e.target.value })} 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm text-slate-700" 
-                                placeholder="Ex: joao.silva@somosempilhadeiras.com.br" 
+                            <input
+                                type="email"
+                                required
+                                value={userForm.login} onChange={(e) => setUserForm({ ...userForm, login: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm text-slate-700"
+                                placeholder="Ex: joao.silva@somosempilhadeiras.com.br"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-700 uppercase">Senha Inicial</label>
-                            <input 
-                                type="text" required 
-                                value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm text-slate-700" 
-                                placeholder="••••••••" 
+                            <input
+                                type="text" required
+                                value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm text-slate-700"
+                                placeholder="••••••••"
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2"><MapPin size={14}/> Unidade Vinculada</label>
-                            <select 
-                                required value={userForm.state} onChange={(e) => setUserForm({ ...userForm, state: e.target.value })} 
+                            <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2"><MapPin size={14} /> Unidade Vinculada</label>
+                            <select
+                                required value={userForm.state} onChange={(e) => setUserForm({ ...userForm, state: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium text-slate-700"
                             >
                                 <option value="">-- Selecione a Unidade --</option>
@@ -213,9 +222,9 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2"><Shield size={14}/> Nível de Permissão</label>
-                            <select 
-                                required value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} 
+                            <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2"><Shield size={14} /> Nível de Permissão</label>
+                            <select
+                                required value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium text-slate-700"
                             >
                                 <option value="employee">Consultor(a) - Padrão</option>
@@ -236,46 +245,46 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
                         <div className="p-6 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                             <h3 className="font-black text-slate-800 uppercase flex items-center gap-2">
-                                <Edit size={18} className="text-blue-500"/> Editando Consultor
+                                <Edit size={18} className="text-blue-500" /> Editando Consultor
                             </h3>
                             <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-red-500 bg-white p-1 rounded-lg border border-slate-200 shadow-sm"><X size={20} /></button>
                         </div>
-                        
+
                         <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-slate-500 uppercase">Nome Completo</label>
-                                <input 
-                                    type="text" required 
-                                    value={editingUser.name} onChange={e => setEditingUser({...editingUser, name: e.target.value})} 
-                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-blue-500" 
+                                <input
+                                    type="text" required
+                                    value={editingUser.name} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
+                                    className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:border-blue-500"
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase">Login de Acesso</label>
-                                    <input 
-                                        type="text" required 
-                                        value={editingUser.login} onChange={e => setEditingUser({...editingUser, login: e.target.value})} 
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm outline-none focus:border-blue-500" 
+                                    <input
+                                        type="text" required
+                                        value={editingUser.login} onChange={e => setEditingUser({ ...editingUser, login: e.target.value })}
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm outline-none focus:border-blue-500"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><Key size={14}/> Nova Senha</label>
-                                    <input 
-                                        type="text" 
-                                        value={editingUser.password || ''} onChange={e => setEditingUser({...editingUser, password: e.target.value})} 
-                                        className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono text-sm outline-none focus:border-blue-500 placeholder:text-slate-300" 
-                                        placeholder="Deixe em branco para não alterar" 
+                                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><Key size={14} /> Nova Senha</label>
+                                    <input
+                                        type="text"
+                                        value={editingUser.password || ''} onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
+                                        className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono text-sm outline-none focus:border-blue-500 placeholder:text-slate-300"
+                                        placeholder="Deixe em branco para não alterar"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase">Unidade</label>
-                                    <select 
-                                        required value={editingUser.state} onChange={e => setEditingUser({...editingUser, state: e.target.value})} 
+                                    <select
+                                        required value={editingUser.state} onChange={e => setEditingUser({ ...editingUser, state: e.target.value })}
                                         className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500"
                                     >
                                         <option value="">Selecione...</option>
@@ -284,8 +293,8 @@ export default function RegisterCollaboratorForm({ onUserCreated }: { onUserCrea
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase">Permissão</label>
-                                    <select 
-                                        required value={editingUser.role} onChange={e => setEditingUser({...editingUser, role: e.target.value})} 
+                                    <select
+                                        required value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}
                                         className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500"
                                     >
                                         <option value="employee">Consultor(a) - Padrão</option>

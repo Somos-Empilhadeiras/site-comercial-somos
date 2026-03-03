@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Nota: No Next.js, o padrão é exportar a função como "middleware", mas mantive 
-// a estrutura compatível com a sua exportação atual.
 export function proxy(request: NextRequest) {
   const sessionCookie = request.cookies.get('auth-session')?.value;
   const { pathname } = request.nextUrl;
