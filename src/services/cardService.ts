@@ -13,8 +13,8 @@ export const cardService = {
   async getForCollaborator(collaboratorId: string): Promise<CardType[]> {
     await dbConnect();
     // Tipando 'user' como 'any' resolve o erro "not callable" do findById
-    const user: any = await Collaborator.findById(collaboratorId).lean();
-    
+    const user: any = await (Collaborator as any).findById(collaboratorId).lean();
+
     if (!user || !user.activeCards) return [];
 
     // Busca no banco apenas os cards que estão na lista do usuário
@@ -25,11 +25,11 @@ export const cardService = {
 
   async create(data: { id: string; title: string; description: string; icon: string; url: string; isGlobal: boolean }) {
     await dbConnect();
-    
+
     // Adicionado ': any' no objeto de busca
     const query: any = { id: data.id.toLowerCase() };
     const existing = await Card.findOne(query);
-    
+
     if (existing) {
       throw new Error('Já existe um módulo cadastrado com este ID.');
     }
@@ -44,9 +44,10 @@ export const cardService = {
 
   async toggleVisibility(collaboratorId: string, cardId: string): Promise<boolean> {
     await dbConnect();
-    
+
     // Tipando 'user' como 'any' para não dar erro no indexOf e push
-    const user: any = await Collaborator.findById(collaboratorId);
+    const user: any = await (Collaborator as any).findById(collaboratorId).lean();
+
     if (!user) return false;
 
     // Inicializa activeCards se estiver indefinido

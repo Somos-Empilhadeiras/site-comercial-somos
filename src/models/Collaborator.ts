@@ -23,4 +23,5 @@ const CollaboratorSchema = new Schema({
   toObject: { virtuals: true }
 });
 
-export default models.Collaborator || model('Collaborator', CollaboratorSchema);
+const Collaborator: any = mongoose.models.Collaborator || mongoose.model('Collaborator', CollaboratorSchema);
+export default Collaborator;

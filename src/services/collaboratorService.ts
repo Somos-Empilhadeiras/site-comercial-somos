@@ -8,8 +8,8 @@ export const collaboratorService = {
     async authenticate(login: string, pass: string): Promise<CollaboratorData | null> {
         await dbConnect();
         // Busca o usuário e já converte o _id para id automaticamente
-        const user = await Collaborator.findOne({ login, password: pass }).lean();
-        
+        const user = await (Collaborator as any).findOne({ login, password: pass }).lean();
+
         if (!user) return null;
 
         const { password, ...userWithoutPassword } = user;
@@ -19,7 +19,7 @@ export const collaboratorService = {
     // 2. Criação (Salvando no Atlas)
     async create(data: Partial<CollaboratorData>): Promise<CollaboratorData> {
         await dbConnect();
-        
+
         // O Mongoose cuidará da validação do Schema
         const newCollaborator = await Collaborator.create({
             ...data,
