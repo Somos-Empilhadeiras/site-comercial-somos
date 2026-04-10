@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
+import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, Legend 
+    PieChart, Pie, Cell, Legend
 } from 'recharts';
 import {
     Users, MapPin, LayoutTemplate, TrendingUp, Lock, Unlock, Map,
@@ -75,7 +75,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
 
         if (filterOption !== 'custom') {
             if (filterOption === '90') {
-                limitDate.setMonth(today.getMonth() - 3); 
+                limitDate.setMonth(today.getMonth() - 3);
             } else {
                 limitDate.setDate(today.getDate() - parseInt(filterOption));
             }
@@ -85,8 +85,8 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
         return commissions.filter((c: any) => {
             // CORREÇÃO AQUI: Prioriza a data informada no extrato (date/data) antes da data do sistema (createdAt)
             let dateStr = c.date || c.data || c.createdAt;
-            if (!dateStr) return true; 
-            
+            if (!dateStr) return true;
+
             // Garante que o fuso horário não jogue a data para o dia anterior
             if (typeof dateStr === 'string' && dateStr.includes('T')) {
                 dateStr = dateStr.split('T')[0];
@@ -108,7 +108,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
     // ==========================================
     // 3. ATUALIZAÇÃO DOS CÁLCULOS
     // ==========================================
-    
+
     const totalRevenue = filteredCommissions.reduce((sum: number, curr: any) => sum + safeNumber(curr.valorVenda), 0) || 0;
     const lockedCards = cards?.filter((c: any) => c.isLocked).length || 0;
     const freeCards = (cards?.length || 0) - lockedCards;
@@ -143,12 +143,12 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
 
             if (vendas > 0) {
                 const state = (c.state || 'OUTROS').toUpperCase();
-                
+
                 if (!statesMap[state]) statesMap[state] = 0;
                 statesMap[state] += vendas;
 
                 collabList.push({
-                    name: c.name.split(' ')[0], 
+                    name: c.name.split(' ')[0],
                     state: state,
                     value: vendas
                 });
@@ -171,12 +171,23 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
         return { ...c, total };
     }).sort((a: any, b: any) => b.total - a.total).slice(0, 4);
 
-    const activeStates = Array.isArray(units) ? units.map(u => u.id.toLowerCase()) : [];
+    const activeStates = [...new Set(
+        collaborators
+            .filter((c: any) => c.state)
+            .map((c: any) => c.state.toUpperCase())
+    )];
+
+    // 2. Estados Azuis (Onde ocorreram comissões do tipo "locacao")
+    const rentalStates = [...new Set(
+        commissions
+            .filter((c: any) => c.type === 'locacao' && c.estado)
+            .map((c: any) => c.estado.toUpperCase())
+    )];
 
     // --- LOG DE ATIVIDADES ---
     const buildActivityLog = () => {
         const logs: any[] = [];
-        
+
         filteredCommissions.forEach((c: any) => {
             // CORREÇÃO: Usa a data real para o log também
             let logDateStr = c.date || c.data || c.createdAt;
@@ -195,7 +206,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                 bg: 'bg-green-50'
             });
         });
-        
+
         cards?.forEach((c: any) => {
             if (c.createdAt) {
                 logs.push({
@@ -363,7 +374,12 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                         </h3>
                     </div>
                     <div className="flex-1 bg-slate-50 rounded-2xl flex items-center justify-center p-4 border border-slate-100 min-h-80">
-                        <MiniBrazilMap activeStates={activeStates} />
+                        <div className="h-[300px] w-full">
+                            <MiniBrazilMap
+                                activeStates={activeStates}
+                                rentalStates={rentalStates}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -397,7 +413,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
 
             {/* 3. LINHA: PIZZA DUPLA & LOGS */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                
+
                 {/* GRÁFICO DE PIZZA DUPLA */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
                     <div className="mb-4">
@@ -415,33 +431,33 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Tooltip 
-                                        formatter={(val: number) => formatCurrency(val)} 
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+                                    <Tooltip
+                                        formatter={(val: number) => formatCurrency(val)}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
-                                    
+
                                     <Pie
                                         data={doublePieData.states}
                                         dataKey="value"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius="50%" 
+                                        outerRadius="50%"
                                         fill="#8884d8"
                                     >
                                         {doublePieData.states.map((entry, index) => (
                                             <Cell key={`cell-state-${index}`} fill={PIE_COLORS_INNER[index % PIE_COLORS_INNER.length]} />
                                         ))}
                                     </Pie>
-                                    
+
                                     <Pie
                                         data={doublePieData.collabs}
                                         dataKey="value"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius="60%" 
-                                        outerRadius="80%" 
+                                        innerRadius="60%"
+                                        outerRadius="80%"
                                         fill="#82ca9d"
                                         // CORREÇÃO: Sem nenhuma condição if/else. O label vai forçar a aparecer para todos!
                                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
@@ -450,15 +466,15 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                                             <Cell key={`cell-collab-${index}`} fill={PIE_COLORS_OUTER[index % PIE_COLORS_OUTER.length]} />
                                         ))}
                                     </Pie>
-                                    
-                                    <Legend 
-                                        verticalAlign="bottom" 
+
+                                    <Legend
+                                        verticalAlign="bottom"
                                         content={() => (
                                             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-6">
                                                 {doublePieData.states.map((state, index) => (
                                                     <div key={`custom-legend-${index}`} className="flex items-center gap-2">
-                                                        <span 
-                                                            className="w-3 h-3 rounded-full shadow-sm" 
+                                                        <span
+                                                            className="w-3 h-3 rounded-full shadow-sm"
                                                             style={{ backgroundColor: PIE_COLORS_INNER[index % PIE_COLORS_INNER.length] }}
                                                         ></span>
                                                         <span className="text-xs font-bold text-slate-700">

@@ -1,38 +1,47 @@
-import { NextResponse } from 'next/server';
-import { cardService } from '../../../../../services/cardService';
-import AuditLog from '../../../../../models/AuditLog';
-import dbConnect from '../../../../../lib/mongodb';
-
+import { NextResponse } from "next/server";
+import { cardService } from "../../../../../services/cardService";
+import dbConnect from "../../../../../lib/mongodb";
+import AuditLog from "../../../../../models/AuditLog";
 
 export async function POST(request: Request) {
   try {
-    await dbConnect(); // Conexão crucial para o ambiente Next.js
+    await dbConnect();
 
-    const body = await request.json();
+    // 1. Validação do Body
+    const body = await request.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+
     const { collaboratorId, cardId } = body;
-
     if (!collaboratorId || !cardId) {
       return NextResponse.json({ error: 'Dados insuficientes' }, { status: 400 });
     }
 
+    // 2. Execução do Serviço (Lógica de Negócio)
     const success = await cardService.toggleVisibility(collaboratorId, cardId);
 
     if (!success) {
-      return NextResponse.json({ error: 'Não foi possível alterar a permissão' }, { status: 400 });
+       // Aqui pode ser um 404 se o card não existir, ou 400
+       return NextResponse.json({ error: 'Permissão não alterada' }, { status: 400 });
     }
 
-    // Buscamos o colaborador para ter o nome no log
+    // 3. Persistência de Auditoria (Side Effect)
+    // Se o log de auditoria não for crítico para a resposta, 
+    // você pode até disparar sem o await se quiser performance, 
+    // mas para garantir integridade, mantenha o await.
     await AuditLog.create({
       action: 'access_change',
       entity: 'collaborator',
       description: `Permissões alteradas para o card ${cardId}`,
-      targetName: collaboratorId // Salve apenas o ID do colaborador por enquanto
+      targetName: collaboratorId 
     });
 
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error("DETALHES DO ERRO 500:", error.message);
+    // Log detalhado para o desenvolvedor
+    console.error("--- DEBUG 500 ---");
+    console.error("Stack:", error.stack); 
+    
     return NextResponse.json(
       { error: 'Erro interno no servidor', details: error.message },
       { status: 500 }

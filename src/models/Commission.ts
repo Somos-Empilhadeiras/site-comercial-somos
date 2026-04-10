@@ -7,7 +7,11 @@ const CommissionSchema = new mongoose.Schema({
   quantidade: { type: Number, required: true },
   valorVenda: { type: Number, required: true },
   valorComissao: { type: Number, required: true },
-  // Usamos o monthYear automático para agrupar nos gráficos (Ex: '2026-03')
+  
+  // NOVOS CAMPOS OFICIAIS
+  type: { type: String, enum: ['venda', 'locacao'], default: 'venda' },
+  estado: { type: String, default: 'GO' }, // Estado onde ocorreu a locação/venda
+
   monthYear: { 
     type: String, 
     default: () => {

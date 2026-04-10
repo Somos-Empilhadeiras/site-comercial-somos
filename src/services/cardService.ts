@@ -13,7 +13,7 @@ export const cardService = {
   async getForCollaborator(collaboratorId: string): Promise<CardType[]> {
     await dbConnect();
     // Tipando 'user' como 'any' resolve o erro "not callable" do findById
-    const user: any = await (Collaborator as any).findById(collaboratorId).lean();
+    const user: any = await (Collaborator as any).findById(collaboratorId);
 
     if (!user || !user.activeCards) return [];
 
@@ -43,27 +43,21 @@ export const cardService = {
   },
 
   async toggleVisibility(collaboratorId: string, cardId: string): Promise<boolean> {
-    await dbConnect();
+  await dbConnect();
 
-    // Tipando 'user' como 'any' para não dar erro no indexOf e push
-    const user: any = await (Collaborator as any).findById(collaboratorId).lean();
+  // 1. Buscamos o estado atual para saber se vamos adicionar ou remover
+  const user = await Collaborator.findById(collaboratorId).select('activeCards');
+  if (!user) return false;
 
-    if (!user) return false;
+  const isIncluded = user.activeCards?.includes(cardId);
 
-    // Inicializa activeCards se estiver indefinido
-    if (!user.activeCards) {
-      user.activeCards = [];
-    }
+  // 2. Usamos operadores atômicos do MongoDB ($pull para remover, $addToSet para adicionar sem duplicar)
+  const updateQuery = isIncluded 
+    ? { $pull: { activeCards: cardId } } 
+    : { $addToSet: { activeCards: cardId } };
 
-    const cardIndex = user.activeCards.indexOf(cardId);
-
-    if (cardIndex > -1) {
-      user.activeCards.splice(cardIndex, 1); // Remove acesso
-    } else {
-      user.activeCards.push(cardId); // Adiciona acesso
-    }
-
-    await user.save();
-    return true;
-  }
+  await Collaborator.updateOne({ _id: collaboratorId }, updateQuery);
+  
+  return true;
+}
 };

@@ -110,26 +110,36 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
   // 3. CÁLCULOS E GRÁFICOS
   // ==========================================
   const totals = useMemo(() => {
-    const total = filteredCommissions.reduce((sum, item) => sum + item.value, 0);
-    const vendas = filteredCommissions.reduce((sum, item) => sum + item.valorVenda, 0);
-    const locacao = filteredCommissions.filter(c => c.type === 'locacao').reduce((sum, item) => sum + item.value, 0);
-    return { total, vendas, locacao };
+    // 1. SOMAS DE COMISSÃO (Ganhos reais do consultor)
+    const comissaoTotal = filteredCommissions.reduce((sum, item) => sum + item.value, 0);
+    const comissaoVendas = filteredCommissions.filter(c => c.type === 'venda').reduce((sum, item) => sum + item.value, 0);
+    const comissaoLocacao = filteredCommissions.filter(c => c.type === 'locacao').reduce((sum, item) => sum + item.value, 0);
+
+    // 2. SOMAS DE VOLUME BRUTO (Valor dos contratos/equipamentos)
+    const volumeVendas = filteredCommissions.filter(c => c.type === 'venda').reduce((sum, item) => sum + item.valorVenda, 0);
+    const volumeLocacao = filteredCommissions.filter(c => c.type === 'locacao').reduce((sum, item) => sum + item.valorVenda, 0);
+
+    return { comissaoTotal, comissaoVendas, comissaoLocacao, volumeVendas, volumeLocacao };
   }, [filteredCommissions]);
 
-  const barChartData = useMemo(() => {
+const barChartData = useMemo(() => {
     const groups = filteredCommissions.reduce((acc: any, curr) => {
       const key = curr.monthYear;
       if (!acc[key]) acc[key] = { month: key, vendas: 0, locacao: 0 };
-      if (curr.type === 'venda') acc[key].vendas += curr.value;
-      else acc[key].locacao += curr.value;
+      
+      // MUDANÇA AQUI: Agora soma o VOLUME (valorVenda) no gráfico de barras
+      if (curr.type === 'venda') acc[key].vendas += curr.valorVenda;
+      else acc[key].locacao += curr.valorVenda;
+      
       return acc;
     }, {});
     return Object.values(groups).sort((a: any, b: any) => a.month.localeCompare(b.month));
   }, [filteredCommissions]);
 
   const pieChartData = [
-    { name: 'Vendas', value: totals.total - totals.locacao },
-    { name: 'Locação', value: totals.locacao }
+    // MUDANÇA AQUI: Agora o gráfico de pizza puxa os Volumes do 'totals'
+    { name: 'Vendas', value: totals.volumeVendas },
+    { name: 'Locação', value: totals.volumeLocacao }
   ].filter(item => item.value > 0);
 
   const formatCurrency = (val: number) => isNaN(val) ? 'R$ 0,00' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -181,8 +191,8 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
       {
         title: "Resumo de Desempenho",
         fields: [
-          { label: "Total em Vendas", value: formatCurrency(totals.vendas) },
-          { label: "Total em Locação", value: formatCurrency(totals.locacao) },
+          { label: "Volume de Vendas", value: formatCurrency(totals.volumeVendas) },
+          { label: "Volume de Locação", value: formatCurrency(totals.volumeLocacao) },
           { label: "Qtd. de Operações", value: filteredCommissions.length }
         ]
       }
@@ -199,7 +209,7 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
     },
     highlightTotal: {
       label: "COMISSÃO LÍQUIDA A RECEBER",
-      value: formatCurrency(totals.total)
+      value: formatCurrency(totals.comissaoTotal) // <- Usando a nova variável
     }
   };
 
@@ -221,9 +231,9 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
             "Abaixo você confere os números consolidados de suas vendas e locações. O extrato completo segue em anexo (PDF)."
           ],
           summaryData: [
-            { label: "Vendas Realizadas", value: formatCurrency(totals.vendas) },
-            { label: "Total em Locações", value: formatCurrency(totals.locacao) },
-            { label: "Comissão Total", value: formatCurrency(totals.total), isHighlight: true }
+            { label: "Volume de Vendas", value: formatCurrency(totals.volumeVendas) },
+            { label: "Volume de Locação", value: formatCurrency(totals.volumeLocacao) },
+            { label: "Comissão Total", value: formatCurrency(totals.comissaoTotal), isHighlight: true }
           ],
           // O SEGREDO: Enviamos as propriedades do PDF completas para a Rota gerar o anexo!
           documentProps: reportProps
@@ -304,7 +314,7 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
           </div>
           <div className="overflow-hidden">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Ganhos Totais (Comissão)</p>
-            <p className="text-2xl font-black text-slate-800 truncate">{formatCurrency(totals.total)}</p>
+            <p className="text-2xl font-black text-slate-800 truncate">{formatCurrency(totals.comissaoTotal)}</p>
           </div>
         </div>
 
@@ -314,7 +324,7 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
           </div>
           <div className="overflow-hidden">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Volume de Vendas</p>
-            <p className="text-2xl font-black text-emerald-600 truncate">{formatCurrency(totals.vendas)}</p>
+            <p className="text-2xl font-black text-emerald-600 truncate">{formatCurrency(totals.volumeVendas)}</p>
           </div>
         </div>
 
@@ -323,8 +333,8 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
             <Key size={28} />
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Total de Locação</p>
-            <p className="text-2xl font-black text-blue-600 truncate">{formatCurrency(totals.locacao)}</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Total de Locação (Volume)</p>
+            <p className="text-2xl font-black text-blue-600 truncate">{formatCurrency(totals.volumeLocacao)}</p>
           </div>
         </div>
       </div>
@@ -388,7 +398,7 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
                 <th className="p-5 border-b border-gray-50">Cliente</th>
                 <th className="p-5 border-b border-gray-50">Equipamento</th>
                 <th className="p-5 border-b border-gray-50 text-center">Qtd</th>
-                <th className="p-5 border-b border-gray-50 text-right">Valor Venda</th>
+                <th className="p-5 border-b border-gray-50 text-right">Valor Venda/Locação</th>
                 <th className="p-5 border-b border-gray-50 text-right text-green-700">Comissão</th>
               </tr>
             </thead>
