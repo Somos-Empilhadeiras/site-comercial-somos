@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 
 export default function UploadManager({ collaborators, onUploadSuccess }: any) {
-    // Aba ativa: 'manual' ou 'lote'
     const [mode, setMode] = useState<'manual' | 'lote'>('manual');
     
-    // Estados Globais (Usados em ambos os modos)
     const [selectedCollab, setSelectedCollab] = useState('');
     const [uploadType, setUploadType] = useState('venda');
     const [uploadState, setUploadState] = useState('GO');
     
-    // Estado do Modo Lote
     const [excelData, setExcelData] = useState('');
     
-    // Estado do Modo Manual
+    // 1. ESTADO: Adicionado 'quantidadePropostas' ao formulário
     const [manualForm, setManualForm] = useState({
-        date: '', cliente: '', modelo: '', quantidade: 1, valorVenda: '', valorComissao: ''
+        date: '', cliente: '', modelo: '', quantidade: 1, valorVenda: '', valorComissao: '', quantidadePropostas: ''
     });
 
     const [uploadMessage, setUploadMessage] = useState({ type: '', text: '' });
@@ -36,8 +33,6 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
                 if (!excelData.trim()) throw new Error('Cole os dados do Excel na área de texto.');
                 textToProcess = excelData;
             } else {
-                // MODO MANUAL: Transforma o formulário em uma "linha de Excel" com TABs (\t) 
-                // Isso permite reaproveitar o exato mesmo backend sem precisar de rotas novas!
                 const { date, cliente, modelo, quantidade, valorVenda, valorComissao } = manualForm;
                 if (!date || !cliente || !modelo || !valorVenda || !valorComissao) {
                     throw new Error('Preencha todos os campos obrigatórios do formulário.');
@@ -53,6 +48,8 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
                     collaboratorId: selectedCollab,
                     tipoLancamento: uploadType,
                     estadoLancamento: uploadState,
+                    // 2. ENVIO: Enviando a quantidade de propostas para a API
+                    quantidadePropostas: mode === 'manual' ? Number(manualForm.quantidadePropostas) : 0,
                     mapping: { date: 0, cliente: 1, modelo: 2, quantidade: 3, valorVenda: 4, valorComissao: 5 }
                 }),
             });
@@ -63,7 +60,7 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
             
             // Limpa os formulários após o sucesso
             setExcelData('');
-            setManualForm({ date: '', cliente: '', modelo: '', quantidade: 1, valorVenda: '', valorComissao: '' });
+            setManualForm({ date: '', cliente: '', modelo: '', quantidade: 1, valorVenda: '', valorComissao: '', quantidadePropostas: '' });
             onUploadSuccess();
 
         } catch (err: any) { 
@@ -76,7 +73,6 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
     return (
         <div className="w-full max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-lg border border-gray-100 animate-in fade-in">
             
-            {/* ABAS DE NAVEGAÇÃO */}
             <div className="flex bg-slate-100 p-1 rounded-xl mb-8">
                 <button 
                     onClick={() => { setMode('manual'); setUploadMessage({type:'', text:''}); }}
@@ -100,7 +96,6 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
 
             <form onSubmit={handleProcess} className="space-y-6">
                 
-                {/* 1. SELEÇÃO DE CONSULTOR (Comum aos dois modos) */}
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Identificação</h3>
                     <select value={selectedCollab} onChange={(e) => setSelectedCollab(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-xl font-bold outline-none focus:ring-2 focus:ring-green-500">
@@ -109,7 +104,6 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
                     </select>
                 </div>
 
-                {/* 2. DADOS DO LANÇAMENTO */}
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Dados da Operação</h3>
                     
@@ -124,19 +118,17 @@ export default function UploadManager({ collaborators, onUploadSuccess }: any) {
                         </select>
                     </div>
 
-                    {/* MODO: MANUAL */}
                     {mode === 'manual' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-bottom-2">
                             <input type="date" value={manualForm.date} onChange={e => setManualForm({...manualForm, date: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
                             <input type="text" placeholder="Nome do Cliente" value={manualForm.cliente} onChange={e => setManualForm({...manualForm, cliente: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
                             <input type="text" placeholder="Equipamento/Modelo" value={manualForm.modelo} onChange={e => setManualForm({...manualForm, modelo: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
-                            <input type="number" placeholder="Quantidade" min="1" value={manualForm.quantidade} onChange={e => setManualForm({...manualForm, quantidade: Number(e.target.value)})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
-                            <input type="text" placeholder="Valor da Venda/Locação (Ex: 150000,00)" value={manualForm.valorVenda} onChange={e => setManualForm({...manualForm, valorVenda: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
-                            <input type="text" placeholder="Valor da Comissão (Ex: 1500,00)" value={manualForm.valorComissao} onChange={e => setManualForm({...manualForm, valorComissao: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
+                            <input type="number" placeholder="Quantidade Máquinas" min="1" value={manualForm.quantidade} onChange={e => setManualForm({...manualForm, quantidade: Number(e.target.value)})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
+                            <input type="text" placeholder="Valor da Venda/Locação (R$)" value={manualForm.valorVenda} onChange={e => setManualForm({...manualForm, valorVenda: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
+                            <input type="text" placeholder="Valor da Comissão (R$)" value={manualForm.valorComissao} onChange={e => setManualForm({...manualForm, valorComissao: e.target.value})} className="p-4 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500" required />
                         </div>
                     )}
 
-                    {/* MODO: LOTE (TEXTAREA) */}
                     {mode === 'lote' && (
                         <div className="animate-in slide-in-from-bottom-2">
                             <textarea 

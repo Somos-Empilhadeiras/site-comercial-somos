@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, Legend
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+    PieChart, Pie, Cell, Legend as RechartsLegend
 } from 'recharts';
 import {
     Users, MapPin, LayoutTemplate, TrendingUp, Lock, Unlock, Map,
-    History, Clock, HandCoins, PieChart as PieChartIcon, Filter
+    History, Clock, HandCoins, PieChart as PieChartIcon, Filter, X
 } from 'lucide-react';
 import MiniBrazilMap from '../MiniBrazilMap';
 import Link from 'next/link';
@@ -17,6 +17,31 @@ const PIE_COLORS_OUTER = ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ec4899',
 
 export default function DashboardOverview({ commissions, collaborators, cards }: any) {
     const [units, setUnits] = useState<any[]>([]);
+    const [focusedDataKey, setFocusedDataKey] = useState<string | null>(null);
+    const [lockedKey, setLockedKey] = useState<boolean>(false);
+
+    // Estado para controlar a expansão do mapa interativo
+    const [expandedState, 
+        setExpandedState] = useState<string | null>(null);
+
+    const onLegendMouseEnter = (payload: any) => {
+        if (!lockedKey) setFocusedDataKey(String(payload.dataKey));
+    };
+    const onLegendMouseOut = () => {
+        if (!lockedKey) setFocusedDataKey(null);
+    };
+    const onLegendClick = (payload: any) => {
+        if (focusedDataKey === String(payload.dataKey)) {
+            if (lockedKey) { setFocusedDataKey(null); setLockedKey(false); }
+            else setLockedKey(true);
+        } else {
+            setFocusedDataKey(String(payload.dataKey));
+            setLockedKey(true);
+        }
+    };
+
+    const barFill = (key: string, color: string) =>
+        focusedDataKey == null || focusedDataKey === key ? color : '#e2e8f0';
 
     // ==========================================
     // 1. ESTADOS DO FILTRO DE PERÍODO
@@ -63,7 +88,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
     };
 
     // ==========================================
-    // 2. LÓGICA DE FILTRAGEM DE DATAS (CORRIGIDA)
+    // 2. LÓGICA DE FILTRAGEM DE DATAS
     // ==========================================
     const filteredCommissions = useMemo(() => {
         if (!commissions) return [];
@@ -83,11 +108,9 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
         }
 
         return commissions.filter((c: any) => {
-            // CORREÇÃO AQUI: Prioriza a data informada no extrato (date/data) antes da data do sistema (createdAt)
             let dateStr = c.date || c.data || c.createdAt;
             if (!dateStr) return true;
 
-            // Garante que o fuso horário não jogue a data para o dia anterior
             if (typeof dateStr === 'string' && dateStr.includes('T')) {
                 dateStr = dateStr.split('T')[0];
             }
@@ -116,17 +139,28 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
     // --- GRÁFICO 1: RANKING DE FATURAMENTO ---
     const performanceChartData = useMemo(() => {
         if (!collaborators || !filteredCommissions) return [];
+
         const data = collaborators.map((c: any) => {
-            const totalVendas = filteredCommissions
-                .filter((com: any) => String(com.collaboratorId) === String(c._id))
+            const comissoes = filteredCommissions.filter(
+                (com: any) => String(com.collaboratorId) === String(c._id)
+            );
+
+            const vendas = comissoes
+                .filter((com: any) => (com.type || 'venda') === 'venda')
                 .reduce((sum: number, com: any) => sum + safeNumber(com.valorVenda), 0);
-            return {
-                name: c.name.split(' ')[0],
-                fullName: c.name,
-                totalVendas: totalVendas
-            };
+
+            const locacao = comissoes
+                .filter((com: any) => com.type === 'locacao')
+                .reduce((sum: number, com: any) => sum + safeNumber(com.valorVenda), 0);
+
+            const meta = safeNumber(c.meta ?? 0);
+
+            return { name: c.name.split(' ')[0], fullName: c.name, vendas, locacao, meta };
         });
-        return data.filter((d: any) => d.totalVendas > 0).sort((a: any, b: any) => b.totalVendas - a.totalVendas);
+
+        return data
+            .filter((d: any) => d.vendas > 0 || d.locacao > 0)
+            .sort((a: any, b: any) => (b.vendas + b.locacao) - (a.vendas + a.locacao));
     }, [collaborators, filteredCommissions]);
 
     // --- GRÁFICO 2: PIZZA DUPLA ---
@@ -171,25 +205,37 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
         return { ...c, total };
     }).sort((a: any, b: any) => b.total - a.total).slice(0, 4);
 
-    const activeStates = [...new Set(
-        collaborators
-            .filter((c: any) => c.state)
-            .map((c: any) => c.state.toUpperCase())
-    )];
+    // ==========================================
+    // 4. LÓGICA DO MAPA E LOGS
+    // ==========================================
 
-    // 2. Estados Azuis (Onde ocorreram comissões do tipo "locacao")
-    const rentalStates = [...new Set(
-        commissions
-            .filter((c: any) => c.type === 'locacao' && c.estado)
-            .map((c: any) => c.estado.toUpperCase())
-    )];
+    const activeStates = [...new Set([
+        ...(units || []).map((u: any) => u.id?.toUpperCase()),
+        ...(collaborators || []).filter((c: any) => c.state).map((c: any) => c.state?.toUpperCase()),
+        ...filteredCommissions
+            .filter((c: any) => c.type === 'venda' || !c.type)
+            .map((c: any) => {
+                if (c.estado) return c.estado.toUpperCase();
+                const col = collaborators?.find((user: any) => String(user._id) === String(c.collaboratorId));
+                return col?.state ? col.state.toUpperCase() : null;
+            })
+    ].filter(Boolean))];
+
+    const rentalStates = [...new Set([
+        ...filteredCommissions
+            .filter((c: any) => c.type === 'locacao')
+            .map((c: any) => {
+                if (c.estado) return c.estado.toUpperCase();
+                const col = collaborators?.find((user: any) => String(user._id) === String(c.collaboratorId));
+                return col?.state ? col.state.toUpperCase() : null;
+            })
+    ].filter(Boolean))];
 
     // --- LOG DE ATIVIDADES ---
     const buildActivityLog = () => {
         const logs: any[] = [];
 
         filteredCommissions.forEach((c: any) => {
-            // CORREÇÃO: Usa a data real para o log também
             let logDateStr = c.date || c.data || c.createdAt;
             if (typeof logDateStr === 'string' && logDateStr.includes('T')) logDateStr = logDateStr.split('T')[0];
             const logDate = logDateStr ? new Date(logDateStr + 'T12:00:00') : new Date();
@@ -221,6 +267,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                 });
             }
         });
+
         units?.forEach((u: any) => {
             if (u.createdAt) {
                 logs.push({
@@ -239,6 +286,38 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
     };
 
     const recentLogs = buildActivityLog();
+
+    // ==========================================
+    // 5. LÓGICA DE DETALHES DO ESTADO (EXPANSÃO)
+    // ==========================================
+    const getExpandedStateDetails = (sigla: string) => {
+        const isVenda = activeStates.includes(sigla);
+        const isLocacao = rentalStates.includes(sigla);
+
+        let status = 'Sem Operação';
+        if (isVenda && isLocacao) status = 'Status: Misto - Vendas & Locação';
+        else if (isVenda) status = 'Status: Apenas Vendas';
+        else if (isLocacao) status = 'Status: Apenas Locação';
+
+        const stateCommissions = filteredCommissions.filter((c: any) => {
+            const estadoC = c.estado ? c.estado.toUpperCase() : (collaborators?.find((u: any) => String(u._id) === String(c.collaboratorId))?.state?.toUpperCase());
+            return estadoC === sigla;
+        });
+
+        const vendasTotal = stateCommissions.filter((c: any) => c.type === 'venda' || !c.type).reduce((sum: number, c: any) => sum + safeNumber(c.valorVenda), 0);
+        const locacoesTotal = stateCommissions.filter((c: any) => c.type === 'locacao').reduce((sum: number, c: any) => sum + safeNumber(c.valorVenda), 0);
+        const faturamentoTotal = vendasTotal + locacoesTotal;
+        
+        const qttVendas = stateCommissions.filter((c: any) => c.type === 'venda' || !c.type).length;
+        const qttLocacoes = stateCommissions.filter((c: any) => c.type === 'locacao').length;
+
+        const activeCollabsInState = collaborators?.filter((c: any) => {
+             const hasSalesInState = stateCommissions.some((com:any) => String(com.collaboratorId) === String(c._id));
+             return c.state?.toUpperCase() === sigla || hasSalesInState;
+        }) || [];
+
+        return { status, faturamentoTotal, vendasTotal, locacoesTotal, qttVendas, qttLocacoes, activeCollabsInState };
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 w-full pb-10">
@@ -335,54 +414,192 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                 </div>
             </div>
 
-            {/* 2. LINHA: RANKING DE BARRAS & MAPA */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                    <div className="mb-6 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                            <TrendingUp size={18} className="text-green-600" /> Ranking de Faturamento
-                        </h3>
+            {/* EXPANSÃO DO MAPA INTERATIVO */}
+            {expandedState ? (
+                <div className="bg-white p-8 rounded-3xl shadow-lg border border-blue-200 flex flex-col animate-in zoom-in-95 duration-300">
+                     <div className="mb-6 flex justify-between items-center border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-xl flex items-center gap-2">
+                                <Map size={24} className="text-blue-600" /> Detalhes do Estado: {expandedState}
+                            </h3>
+                            <p className="text-sm font-medium text-slate-500 mt-1">{getExpandedStateDetails(expandedState).status}</p>
+                        </div>
+                        <button 
+                            onClick={() => setExpandedState(null)} 
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-xl transition-colors flex items-center gap-2"
+                        >
+                            <X size={16} /> VOLTAR AO PAINEL
+                        </button>
                     </div>
 
-                    <div style={{ width: '100%', height: 300 }}>
-                        {performanceChartData.length === 0 ? (
-                            <div className="h-full flex items-center justify-center text-slate-400 italic font-medium">
-                                Nenhuma venda registrada neste período.
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Mapa Ampliado à Esquerda */}
+                        <div className="bg-slate-50 rounded-2xl flex items-center justify-center p-4 border border-slate-200 min-h-[400px]">
+                            <div className="h-[400px] w-full relative">
+                                <MiniBrazilMap
+                                    activeStates={activeStates}
+                                    rentalStates={rentalStates}
+                                />
+                                {/* Overlay para focar apenas no estado selecionado */}
+                                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                    <div className="bg-white/80 absolute inset-0 backdrop-blur-[1px]"></div>
+                                    <div className="relative z-10 w-3/4 h-3/4">
+                                        <MiniBrazilMap
+                                            activeState={expandedState}
+                                            activeStates={activeStates}
+                                            rentalStates={rentalStates}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={performanceChartData}
-                                    layout="vertical"
-                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                    <XAxis type="number" tickFormatter={(val) => `R$ ${(val / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} width={80} />
-                                    <Tooltip formatter={(val: number) => formatCurrency(val)} cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                    <Bar dataKey="totalVendas" name="Faturamento" fill="#16a34a" radius={[0, 4, 4, 0]} barSize={28} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
-                    <div className="mb-6">
-                        <h3 className="font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                            <Map size={18} className="text-blue-600" /> Presença Nacional
-                        </h3>
-                    </div>
-                    <div className="flex-1 bg-slate-50 rounded-2xl flex items-center justify-center p-4 border border-slate-100 min-h-80">
-                        <div className="h-[300px] w-full">
-                            <MiniBrazilMap
-                                activeStates={activeStates}
-                                rentalStates={rentalStates}
-                            />
+                        {/* Dados Detalhados à Direita */}
+                        <div className="space-y-6">
+                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Métricas Financeiras</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-500">Faturamento Total</p>
+                                        <p className="text-3xl font-black text-slate-800">{formatCurrency(getExpandedStateDetails(expandedState).faturamentoTotal)}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                                         <div>
+                                            <p className="text-xs font-bold text-green-600">Volume Vendas</p>
+                                            <p className="text-lg font-bold text-slate-700">{formatCurrency(getExpandedStateDetails(expandedState).vendasTotal)}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">({getExpandedStateDetails(expandedState).qttVendas} registros)</p>
+                                        </div>
+                                         <div>
+                                            <p className="text-xs font-bold text-blue-600">Volume Locações</p>
+                                            <p className="text-lg font-bold text-slate-700">{formatCurrency(getExpandedStateDetails(expandedState).locacoesTotal)}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">({getExpandedStateDetails(expandedState).qttLocacoes} registros)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex-1">
+                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Equipe Atuante</h4>
+                                {getExpandedStateDetails(expandedState).activeCollabsInState.length > 0 ? (
+                                    <ul className="space-y-2">
+                                        {getExpandedStateDetails(expandedState).activeCollabsInState.map((c: any) => (
+                                            <li key={c._id} className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                                                {c.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-slate-400 italic">Nenhum consultor registrado nesta UF.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                /* 2. LINHA: RANKING DE BARRAS & MAPA (VISÃO PADRÃO) */
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+                        <div className="mb-6 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <TrendingUp size={18} className="text-green-600" /> Ranking de Faturamento
+                            </h3>
+                        </div>
+
+                        <div style={{ width: '100%', height: 300 }}>
+                            {performanceChartData.length === 0 ? (
+                                <div className="h-full flex items-center justify-center text-slate-400 italic font-medium">
+                                    Nenhuma venda registrada neste período.
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={performanceChartData}
+                                        layout="vertical"
+                                        margin={{ top: 5, right: 30, left: 20, bottom: 2 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={true} stroke="#f1f5f9" />
+                                        <XAxis
+                                            type="number"
+                                            tickFormatter={(val) => `R$ ${(val / 1000).toFixed(0)}k`}
+                                            axisLine={false} tickLine={false}
+                                            tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                        />
+                                        <YAxis
+                                            type="category" dataKey="name"
+                                            axisLine={false} tickLine={true}
+                                            tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }}
+                                            width={80}
+                                        />
+                                        <RechartsTooltip
+                                            formatter={(val: number, name: string) => [
+                                                formatCurrency(val),
+                                                name === 'vendas' ? 'Vendas' : name === 'locacao' ? 'Locação' : 'Meta'
+                                            ]}
+                                            cursor={{ fill: '#f8fafc' }}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <RechartsLegend
+                                            onMouseEnter={onLegendMouseEnter}
+                                            onMouseOut={onLegendMouseOut}
+                                            onClick={onLegendClick}
+                                            iconType="circle" iconSize={8}
+                                            formatter={(val) => val === 'vendas' ? 'Vendas' : val === 'locacao' ? 'Locação' : 'Meta'}
+                                            wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
+                                        />
+
+                                        <Bar dataKey="vendas" fill={barFill('vendas', '#16a34a')} radius={[0, 4, 4, 0]} barSize={14} />
+                                        <Bar dataKey="locacao" fill={barFill('locacao', '#3b82f6')} radius={[0, 4, 4, 0]} barSize={14} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col relative group transition-all duration-300 hover:shadow-md hover:border-blue-200">
+                        <div className="mb-6">
+                            <h3 className="font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <Map size={18} className="text-blue-600" /> Presença Nacional
+                            </h3>
+                        </div>
+                        <div className="flex-1 bg-slate-50 rounded-2xl flex flex-col items-center justify-center p-4 border border-slate-100 min-h-[350px] relative">
+                            
+                            {/* Overlay de instrução interativa */}
+                            <div className="absolute inset-0 z-20 pointer-events-none flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className="bg-slate-900/80 text-white font-bold text-sm px-4 py-2 rounded-xl backdrop-blur-sm -translate-y-12">
+                                    Selecione um Estado para Detalhes
+                                </div>
+                            </div>
+
+                            <div className="h-[280px] w-full z-10">
+                                <MiniBrazilMap
+                                    activeStates={activeStates}
+                                    rentalStates={rentalStates}
+                                    interactive={true}
+                                    onClickState={(sigla) => setExpandedState(sigla)}
+                                />
+                            </div>
+
+                            {/* LEGENDA DE CORES */}
+                            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 border-t border-slate-200/60 pt-4 w-full">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full bg-[#16a34a] shadow-sm"></span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Vendas</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full bg-[#3b82f6] shadow-sm"></span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Locação</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3 h-3 rounded-full bg-[#0d9488] shadow-sm"></span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Misto</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 4. LINHA INFERIOR (Top Consultores Expandido) */}
             <div className="w-full flex flex-col mt-4">
@@ -431,7 +648,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Tooltip
+                                    <RechartsTooltip
                                         formatter={(val: number) => formatCurrency(val)}
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
@@ -459,7 +676,6 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                                         innerRadius="60%"
                                         outerRadius="80%"
                                         fill="#82ca9d"
-                                        // CORREÇÃO: Sem nenhuma condição if/else. O label vai forçar a aparecer para todos!
                                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                                     >
                                         {doublePieData.collabs.map((entry, index) => (
@@ -467,7 +683,7 @@ export default function DashboardOverview({ commissions, collaborators, cards }:
                                         ))}
                                     </Pie>
 
-                                    <Legend
+                                    <RechartsLegend
                                         verticalAlign="bottom"
                                         content={() => (
                                             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-6">

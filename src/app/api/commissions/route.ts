@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// 4. DELETAR (DELETE)
+// Função DELETE para exclusão permanente de um lançamento, sem marcar como 'deleted' (hard delete)
 export async function DELETE(request: Request) {
   try {
     await dbConnect();
@@ -88,16 +88,20 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 });
 
-    const comissionToDelete = await commissionService.getByCollaborator(id);
+    // delete já retorna o documento removido, sem query extra
+    const deleted = await commissionService.delete(id);
+
+    if (!deleted) {
+      return NextResponse.json({ error: 'Lançamento não encontrado' }, { status: 404 });
+    }
 
     await AuditLog.create({
-        action: 'delete',
-        entity: 'commission',
-        description: `Exclusão permanente de lançamento`,
-        targetName: comissionToDelete || 'ID: ' + id
+      action: 'delete',
+      entity: 'commission',
+      description: `Exclusão permanente de lançamento`,
+      targetName: (deleted as any).description || 'ID: ' + id,
     });
 
-    await commissionService.delete(id);
     return NextResponse.json({ success: true, message: 'Lançamento removido' });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 });

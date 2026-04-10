@@ -7,16 +7,14 @@ export async function POST(request: Request) {
     try {
         await dbConnect();
         
-        // 1. Extraímos os novos campos do formulário híbrido
-        const { rawText, collaboratorId, tipoLancamento, estadoLancamento } = await request.json();
+        // 1. EXTRAÇÃO: Pegando a quantidadePropostas enviada pelo frontend
+        const { rawText, collaboratorId, tipoLancamento, estadoLancamento, quantidadePropostas } = await request.json();
 
         const lines = rawText.split('\n').filter((l: string) => l.trim() !== '');
 
         const newCommissions = lines.map((line: string) => {
-            // Limpa espaços duplos e garante a quebra por tabs ou múltiplos espaços
             const cols = line.trim().split(/\t| {2,}/); 
             
-            // Se tiver 6 colunas, a primeira é data. Se tiver 5, começa do cliente.
             const hasDate = cols.length >= 6;
             const startIdx = hasDate ? 1 : 0;
 
@@ -36,9 +34,10 @@ export async function POST(request: Request) {
                 date: finalDate.toISOString(),
                 monthYear: finalDate.toISOString().slice(0, 7),
                 
-                // 2. O ELO PERDIDO: Inserindo Tipo e Estado no Banco
+                // 2. INJEÇÃO NO BANCO DE DADOS:
                 type: tipoLancamento || 'venda',
-                estado: estadoLancamento || 'GO'
+                estado: estadoLancamento || 'GO',
+                quantidadePropostas: Number(quantidadePropostas) || 0 // Salva o número ou 0
             };
         });
 
@@ -49,7 +48,6 @@ export async function POST(request: Request) {
             await AuditLog.create({
                 action: 'create',
                 entity: 'commission',
-                // Melhoramos a descrição para incluir o tipo e estado no log
                 description: `Importação de ${newCommissions.length} itens (${tipoLancamento} em ${estadoLancamento}).`,
                 targetName: `Lote Consultor: ${collaboratorId}`
             });

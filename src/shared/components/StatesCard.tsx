@@ -14,9 +14,7 @@ export default function InfoCard({ state, address, link, iconElem, mapState }: I
   const Icon = iconElem as ElementType;
 
   return (
-    <div className="flex items-center justify-center p-4">
-      {/* 1. VISUAL RESTAURADO: rounded-3xl, gradient original, shadows */}
-      <div className="relative bg-linear-to-br from-green-700 to-green-900 rounded-3xl p-8 w-96 min-h-56 shadow-2xl flex flex-col justify-between overflow-hidden group/card transition-all hover:-translate-y-1">
+      <div className="relative bg-linear-to-br from-green-700 to-green-900 rounded-3xl p-8 w-full min-h-56 shadow-2xl flex flex-col justify-between overflow-hidden group/card transition-all hover:-translate-y-1">
 
         {/* LADO ESQUERDO: TEXTOS (Mantido) */}
         <div className="z-10 pr-16 relative">
@@ -60,6 +58,5 @@ export default function InfoCard({ state, address, link, iconElem, mapState }: I
         </div>
 
       </div>
-    </div>
   );
 }

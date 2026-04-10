@@ -5,8 +5,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { HandCoins, TrendingUp, Key, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Filter, Mail } from 'lucide-react';
-import PDFDownloadButton from './PDFDownloadButton'; 
+import { HandCoins, TrendingUp, Key, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Filter, Mail, FileText, Percent } from 'lucide-react';
+import PDFDownloadButton from './PDFDownloadButton';
 
 interface Commission {
   _id?: string;
@@ -26,6 +26,27 @@ interface Commission {
 const PIE_COLORS = ['#15803d', '#3b82f6'];
 
 export default function CommissionDashboard({ commissions }: { commissions: Commission[] }) {
+
+  // 1. Cálculos de Performance
+  const metrics = useMemo(() => {
+    // Filtra apenas o que é venda para o cálculo de conversão
+    const vendasRealizadas = commissions.filter(c => c.type === 'venda').length;
+
+    // Soma a quantidade de propostas de todos os registros
+    const totalPropostas = commissions.reduce((sum, item) => sum + (item.quantidadePropostas || 0), 0);
+
+    // Cálculo da Taxa de Conversão (Seguro contra divisão por zero)
+    const taxaConversao = totalPropostas > 0
+      ? (vendasRealizadas / totalPropostas) * 100
+      : 0;
+
+    return {
+      totalPropostas,
+      vendasRealizadas,
+      taxaConversao: taxaConversao.toFixed(1) // Formata com uma casa decimal
+    };
+  }, [commissions]);
+
 
   // ==========================================
   // 0. NORMALIZAÇÃO DE DADOS
@@ -54,7 +75,7 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
         quantidade: c.quantidade ?? c.qtd ?? 1,
         cliente: c.cliente ?? 'Cliente não informado',
         equipamento: c.modelo ?? c.equipamento ?? '-',
-        date: dataStr, 
+        date: dataStr,
         type: (c.type ?? c.tipo ?? 'venda').toLowerCase(),
         monthYear: dataStr.slice(0, 7)
       };
@@ -122,15 +143,15 @@ export default function CommissionDashboard({ commissions }: { commissions: Comm
     return { comissaoTotal, comissaoVendas, comissaoLocacao, volumeVendas, volumeLocacao };
   }, [filteredCommissions]);
 
-const barChartData = useMemo(() => {
+  const barChartData = useMemo(() => {
     const groups = filteredCommissions.reduce((acc: any, curr) => {
       const key = curr.monthYear;
       if (!acc[key]) acc[key] = { month: key, vendas: 0, locacao: 0 };
-      
+
       // MUDANÇA AQUI: Agora soma o VOLUME (valorVenda) no gráfico de barras
       if (curr.type === 'venda') acc[key].vendas += curr.valorVenda;
       else acc[key].locacao += curr.valorVenda;
-      
+
       return acc;
     }, {});
     return Object.values(groups).sort((a: any, b: any) => a.month.localeCompare(b.month));
@@ -152,7 +173,7 @@ const barChartData = useMemo(() => {
   // ==========================================
   // 4. LÓGICA DE EXPORTAÇÃO (IMAGENS + PDF)
   // ==========================================
-  
+
   // Função blindada para gerar URL do QuickChart
   const getChartImageUrl = (config: any) => {
     const jsonString = JSON.stringify(config).replace(/"/g, "'");
@@ -186,7 +207,7 @@ const barChartData = useMemo(() => {
   const reportProps = {
     documentTitle: "Extrato de Comissões",
     subTitle: `Período: ${filterOption === 'all' ? 'Completo' : filterOption} - Emissão: ${new Date().toLocaleDateString('pt-BR')}`,
-    charts: [barChartUrl, pieChartUrl].filter(Boolean), 
+    charts: [barChartUrl, pieChartUrl].filter(Boolean),
     sections: [
       {
         title: "Resumo de Desempenho",
@@ -204,7 +225,7 @@ const barChartData = useMemo(() => {
         c.cliente,
         c.equipamento,
         c.quantidade,
-        formatCurrency(c.value) 
+        formatCurrency(c.value)
       ])
     },
     highlightTotal: {
@@ -258,7 +279,7 @@ const barChartData = useMemo(() => {
 
       {/* BARRA DE FILTROS SUPERIOR */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-4 justify-between">
-        
+
         {/* Lado Esquerdo */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-slate-700 font-bold">
@@ -337,6 +358,48 @@ const barChartData = useMemo(() => {
             <p className="text-2xl font-black text-blue-600 truncate">{formatCurrency(totals.volumeLocacao)}</p>
           </div>
         </div>
+      </div>
+
+      {/* SEÇÃO DE MÉTRICAS DE FUNIL */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* Card: Quantidade de Propostas */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="h-14 w-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 shrink-0">
+            <FileText size={28} />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Propostas Emitidas</p>
+            <p className="text-2xl font-black text-slate-800 truncate">
+              {metrics.totalPropostas} <span className="text-sm font-medium text-slate-400">unid.</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Card: Taxa de Conversão com Barra de Progresso */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-center hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="h-14 w-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 shrink-0">
+              <Percent size={28} />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider truncate">Taxa de Conversão</p>
+              <p className="text-2xl font-black text-slate-800 truncate">{metrics.taxaConversao}%</p>
+            </div>
+          </div>
+
+          {/* Visualização de Barra de Progresso (UX de Engenharia) */}
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-purple-500 h-full transition-all duration-1000 ease-out"
+              style={{ width: `${Math.min(Number(metrics.taxaConversao), 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 mt-2 italic">
+            Baseado em {metrics.vendasRealizadas} vendas fechadas de {metrics.totalPropostas} propostas.
+          </p>
+        </div>
+
       </div>
 
       {/* GRÁFICOS */}

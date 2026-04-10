@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowRight, ShieldCheck, Map } from 'lucide-react';
 import InfoCard from '../shared/components/StatesCard';
-import { Unit } from '../types'; 
+import { Unit } from '../types';
 
 export default function HomePage() {
     const [showUnidades, setShowUnidades] = useState(false);
@@ -16,7 +16,7 @@ export default function HomePage() {
             try {
                 const response = await fetch('/api/units');
                 if (!response.ok) throw new Error('Falha ao buscar unidades');
-                
+
                 const data = await response.json();
                 setUnits(data);
             } catch (error) {
@@ -44,7 +44,7 @@ export default function HomePage() {
                     <span className="text-green-600">Módulos Comerciais</span>
                 </h1>
                 <p className="text-lg text-slate-600 leading-relaxed font-medium">
-                    Selecione uma unidade abaixo para acessar o catálogo de relatórios, 
+                    Selecione uma unidade abaixo para acessar o catálogo de relatórios,
                     comissões e ferramentas operacionais.
                 </p>
             </div>
@@ -89,10 +89,11 @@ export default function HomePage() {
                             Sincronizando unidades...
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full animate-in fade-in zoom-in-95 duration-500">
-                            
+                        // O gap-8 (ou gap-6) aqui é o único responsável por desgrudar os cards
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full animate-in fade-in zoom-in-95 duration-500">
+
                             {/* Card Dinâmico: Todas as Unidades (Admin) */}
-                            <div className="flex justify-center items-center">
+                            <div className="flex justify-center items-center w-full">
                                 <InfoCard
                                     state="TODAS"
                                     address="Visão consolidada de todas as operações"
@@ -105,7 +106,8 @@ export default function HomePage() {
                             {units.map((unit, index) => (
                                 <div
                                     key={unit.id}
-                                    className="flex justify-center items-center"
+                                    // ✨ CORREÇÃO: Removemos o 'mx-8' e o 'gap-8' daqui. Adicionamos 'w-full'.
+                                    className="flex justify-center items-center w-full"
                                     style={{
                                         animationDelay: `${(index + 1) * 0.1}s`,
                                     }}
@@ -114,7 +116,7 @@ export default function HomePage() {
                                         state={unit.name}
                                         address={unit.address}
                                         link={`/${unit.id}`} // Rota direta para o estado
-                                        mapState={unit.id.toUpperCase()} 
+                                        mapState={unit.id.toUpperCase()}
                                     />
                                 </div>
                             ))}

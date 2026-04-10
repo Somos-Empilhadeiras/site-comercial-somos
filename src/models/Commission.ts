@@ -10,17 +10,21 @@ const CommissionSchema = new mongoose.Schema({
   
   // NOVOS CAMPOS OFICIAIS
   type: { type: String, enum: ['venda', 'locacao'], default: 'venda' },
-  estado: { type: String, default: 'GO' }, // Estado onde ocorreu a locação/venda
+  estado: { type: String, default: 'GO' },
 
-  monthYear: { 
-    type: String, 
+  // Usamos o monthYear automático para agrupar nos gráficos (Ex: '2026-03')
+  monthYear: {
+    type: String,
     default: () => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
   },
   date: { type: String },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  strict: false // Mantendo a trava de segurança desativada
+});
 
 const Commission: any = mongoose.models.Commission || mongoose.model('Commission', CommissionSchema);
 export default Commission;
